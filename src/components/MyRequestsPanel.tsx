@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ResolutionTag } from "@/contexts/HRTicketsContext";
 import { resolutionTagConfig } from "@/contexts/HRTicketsContext";
 
-type RequestStatus = "pending" | "in_review" | "resolved";
+type RequestStatus = "pending" | "in_progress" | "in_review" | "resolved";
 
 export interface AuditEvent {
   label: string;
@@ -46,12 +46,14 @@ function formatDate(date: Date): string {
 
 const statusLabels: Record<RequestStatus, string> = {
   pending: "Pending Review",
+  in_progress: "In Progress",
   in_review: "In Review",
   resolved: "Resolved",
 };
 
 const statusBadgeStyles: Record<RequestStatus, string> = {
   pending: "border-warning/30 text-warning bg-warning/5",
+  in_progress: "border-primary/30 text-primary bg-primary/5",
   in_review: "border-info/30 text-info bg-info/5",
   resolved: "border-success/30 text-success bg-success/5",
 };
@@ -62,7 +64,7 @@ const priorityColors: Record<string, string> = {
   medium: "bg-muted text-muted-foreground border-border",
 };
 
-type FilterTab = "all" | "pending" | "in_review" | "resolved";
+type FilterTab = "all" | "pending" | "in_progress" | "in_review" | "resolved";
 
 interface MyRequestsPanelProps {
   isOpen: boolean;
@@ -87,6 +89,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
   };
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const inProgressCount = requests.filter((r) => r.status === "in_progress").length;
   const inReviewCount = requests.filter((r) => r.status === "in_review").length;
   const resolvedCount = requests.filter((r) => r.status === "resolved").length;
 
@@ -97,6 +100,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
   const tabs: { key: FilterTab; label: string }[] = [
     { key: "all", label: "All" },
     { key: "pending", label: "Pending" },
+    { key: "in_progress", label: "Active" },
     { key: "in_review", label: "In Review" },
     { key: "resolved", label: "Resolved" },
   ];
@@ -124,10 +128,14 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
 
           {/* Stats */}
           <div className="px-5 pb-4">
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-4 gap-2 text-center">
               <div className="py-2">
                 <p className="text-2xl font-bold text-warning">{pendingCount}</p>
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pending</p>
+              </div>
+              <div className="py-2">
+                <p className="text-2xl font-bold text-primary">{inProgressCount}</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Active</p>
               </div>
               <div className="py-2">
                 <p className="text-2xl font-bold text-info">{inReviewCount}</p>
