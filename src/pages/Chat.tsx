@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Send, Bot, User, Loader2, ArrowUp, Sparkles, Mail } from "lucide-react";
+import { Loader2, ArrowUp, Sparkles, Mail, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ConversationSidebar from "@/components/ConversationSidebar";
-import MyRequestsPanel from "@/components/MyRequestsPanel";
+import MyRequestsPanel, { type EscalatedRequest } from "@/components/MyRequestsPanel";
+import ChatMessageBubble from "@/components/ChatMessageBubble";
 import CategoryCards from "@/components/CategoryCards";
 import { useAuth } from "@/contexts/AuthContext";
 
