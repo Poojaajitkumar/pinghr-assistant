@@ -291,6 +291,32 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
                               ))}
                             </div>
                           </div>
+
+                          {/* Action buttons based on status */}
+                          <div className="pt-1">
+                            {req.status === "pending" && (
+                              <Button
+                                size="sm"
+                                className="w-full gap-2 text-xs"
+                                onClick={() => handleWorkOn(req.id)}
+                              >
+                                <ArrowRight className="h-3.5 w-3.5" />
+                                Work on this
+                              </Button>
+                            )}
+                            {req.status === "in_review" && (
+                              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border text-xs text-muted-foreground">
+                                <Timer className="h-3.5 w-3.5" />
+                                Waiting for employee confirmation · SLA active
+                              </div>
+                            )}
+                            {req.status === "resolved" && (
+                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-600">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Resolved
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </motion.div>
                     )}
