@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import HRLayout from "@/components/HRLayout";
+import ConversationSidebar from "@/components/ConversationSidebar";
 
 type Priority = "critical" | "high" | "medium";
 type Status = "pending" | "reviewed" | "sent";
@@ -45,7 +45,7 @@ const mockQueries: EscalatedQuery[] = [
     status: "pending",
     priority: "critical",
     category: "Leave",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    timestamp: new Date(Date.now() - 2 * 3600000),
   },
   {
     id: "2",
@@ -55,7 +55,7 @@ const mockQueries: EscalatedQuery[] = [
     status: "pending",
     priority: "high",
     category: "Compensation",
-    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+    timestamp: new Date(Date.now() - 5 * 3600000),
   },
   {
     id: "3",
@@ -65,7 +65,7 @@ const mockQueries: EscalatedQuery[] = [
     status: "reviewed",
     priority: "medium",
     category: "Career Development",
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    timestamp: new Date(Date.now() - 86400000),
     timeToResolve: 45,
   },
   {
@@ -76,7 +76,7 @@ const mockQueries: EscalatedQuery[] = [
     status: "sent",
     priority: "medium",
     category: "Benefits",
-    timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
+    timestamp: new Date(Date.now() - 2 * 86400000),
     timeToResolve: 30,
   },
 ];
@@ -96,6 +96,7 @@ const statusConfig: Record<Status, { label: string; icon: typeof Clock; color: s
 export default function HRQueue() {
   const [queries, setQueries] = useState(mockQueries);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   const handleStatusChange = (id: string, newStatus: "reviewed" | "sent") => {
     setQueries((prev) =>
@@ -115,9 +116,19 @@ export default function HRQueue() {
   const pendingCount = queries.filter((q) => q.status === "pending").length;
 
   return (
-    <HRLayout>
-      {() => (
-        <div className="p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen flex w-full">
+      <ConversationSidebar
+        activeConversationId={activeConversation}
+        onSelectConversation={setActiveConversation}
+        onNewConversation={() => setActiveConversation(null)}
+      />
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-auto">
+        <header className="flex items-center px-6 py-3 border-b bg-card">
+          <span className="font-semibold text-base text-primary">PingHR</span>
+          <span className="text-muted-foreground text-sm ml-3">/ HR Queue</span>
+        </header>
+
+        <div className="p-6 max-w-6xl mx-auto w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-1">HR Ops Queue</h1>
             <p className="text-muted-foreground text-sm">
@@ -139,7 +150,7 @@ export default function HRQueue() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sorted.map((query, i) => {
+                {sorted.map((query) => {
                   const pConfig = priorityConfig[query.priority];
                   const sConfig = statusConfig[query.status];
                   const isExpanded = expandedId === query.id;
@@ -175,39 +186,23 @@ export default function HRQueue() {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          )}
+                          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                         </TableCell>
                       </TableRow>
 
                       {isExpanded && (
                         <TableRow key={`${query.id}-expanded`}>
                           <TableCell colSpan={7} className="bg-muted/10 p-0">
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="px-6 py-4 space-y-4"
-                            >
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-6 py-4 space-y-4">
                               <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                  Employee Question
-                                </h4>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Employee Question</h4>
                                 <p className="text-sm bg-card rounded-lg p-3 border">{query.question}</p>
                               </div>
                               <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                  AI-Drafted Response
-                                </h4>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">AI-Drafted Response</h4>
                                 <div className="text-sm bg-accent/30 rounded-lg p-3 whitespace-pre-wrap border border-primary/10">
                                   {query.aiDraft.split(/(\*\*.*?\*\*)/).map((part, i) =>
-                                    part.startsWith("**") && part.endsWith("**") ? (
-                                      <strong key={i}>{part.slice(2, -2)}</strong>
-                                    ) : (
-                                      <span key={i}>{part}</span>
-                                    )
+                                    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : <span key={i}>{part}</span>
                                   )}
                                 </div>
                               </div>
@@ -215,19 +210,16 @@ export default function HRQueue() {
                                 {query.status === "pending" && (
                                   <>
                                     <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleStatusChange(query.id, "reviewed"); }}>
-                                      <Eye className="h-3.5 w-3.5 mr-1.5" />
-                                      Mark Reviewed
+                                      <Eye className="h-3.5 w-3.5 mr-1.5" /> Mark Reviewed
                                     </Button>
                                     <Button size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(query.id, "sent"); }}>
-                                      <Send className="h-3.5 w-3.5 mr-1.5" />
-                                      Approve & Send
+                                      <Send className="h-3.5 w-3.5 mr-1.5" /> Approve & Send
                                     </Button>
                                   </>
                                 )}
                                 {query.status === "reviewed" && (
                                   <Button size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(query.id, "sent"); }}>
-                                    <Send className="h-3.5 w-3.5 mr-1.5" />
-                                    Send to Employee
+                                    <Send className="h-3.5 w-3.5 mr-1.5" /> Send to Employee
                                   </Button>
                                 )}
                                 {query.status === "sent" && (
@@ -247,7 +239,7 @@ export default function HRQueue() {
             </Table>
           </div>
         </div>
-      )}
-    </HRLayout>
+      </main>
+    </div>
   );
 }
