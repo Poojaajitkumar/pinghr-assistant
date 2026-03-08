@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ResolutionTag } from "@/contexts/HRTicketsContext";
 import { resolutionTagConfig } from "@/contexts/HRTicketsContext";
 
-type RequestStatus = "pending" | "in_progress" | "in_review" | "resolved";
+type RequestStatus = "pending" | "assigned" | "in_progress" | "in_review" | "resolved";
 
 export interface AuditEvent {
   label: string;
