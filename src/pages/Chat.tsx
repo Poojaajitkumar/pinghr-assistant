@@ -234,23 +234,23 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto">
           {showWelcome ? (
-            <div className="flex flex-col items-center justify-center px-6 py-12 max-w-3xl mx-auto min-h-full">
-              <div className="flex-1" />
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-6">
+            <div className="flex flex-col items-center justify-center px-6 py-6 max-w-3xl mx-auto h-full">
+              <div className="flex-1 min-h-0" />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-4">
                 <Sparkles className="h-3.5 w-3.5" />
                 Your HR assistant · Acme Corp
               </div>
-              <h1 className="text-3xl font-bold mb-3 text-center">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2 text-center">
                 Hi {capitalizedName}, what can I help with?
               </h1>
-              <p className="text-muted-foreground text-center mb-1 max-w-lg">
+              <p className="text-muted-foreground text-center mb-1 max-w-lg text-sm">
                 Ask me anything about Acme's HR policies — leave, payroll, benefits, and more.
               </p>
-              <p className="text-xs text-muted-foreground text-center mb-10">
+              <p className="text-xs text-muted-foreground text-center mb-6">
                 Sensitive queries are securely escalated to HR Ops.
               </p>
               <CategoryCards onSelectCategory={handleSend} />
-              <div className="flex-1" />
+              <div className="flex-1 min-h-0" />
             </div>
           ) : (
             <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
