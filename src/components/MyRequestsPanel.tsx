@@ -142,7 +142,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequest
           </div>
 
           {/* Request Cards */}
-          <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-3">
+          <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-3 bg-card">
             {filtered.length === 0 && (
               <div className="text-center py-8 text-sm text-muted-foreground">
                 No requests yet. Escalate a response to create one.
