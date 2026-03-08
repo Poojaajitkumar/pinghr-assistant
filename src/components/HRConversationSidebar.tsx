@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, Trash2, MoreHorizontal, BarChart3, Inbox, PanelLeftClose, PanelLeft } from "lucide-react";
+import { MessageSquare, Plus, Trash2, MoreHorizontal, BarChart3, Inbox, PanelLeftClose, PanelLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
