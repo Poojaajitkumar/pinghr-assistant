@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 
 type RequestStatus = "pending" | "in_review" | "resolved";
 
-interface EscalatedRequest {
+export interface EscalatedRequest {
   id: string;
   summary: string;
   status: RequestStatus;
@@ -13,49 +13,6 @@ interface EscalatedRequest {
   category: string;
   timestamp: Date;
 }
-
-const mockRequests: EscalatedRequest[] = [
-  {
-    id: "1",
-    summary: "Employee asked about the benefits package provided...",
-    status: "pending",
-    priority: "medium",
-    category: "Benefits",
-    timestamp: new Date(Date.now() - 19 * 3600000),
-  },
-  {
-    id: "2",
-    summary: "Employee asked about annual leave policy. Agent...",
-    status: "pending",
-    priority: "medium",
-    category: "Leave & Time Off",
-    timestamp: new Date(Date.now() - 86400000),
-  },
-  {
-    id: "3",
-    summary: "Employee asked about the company's hybrid work...",
-    status: "pending",
-    priority: "medium",
-    category: "Company Policy",
-    timestamp: new Date(Date.now() - 86400000),
-  },
-  {
-    id: "4",
-    summary: "Employee asked about leave policies. Agent outlined the...",
-    status: "pending",
-    priority: "medium",
-    category: "Leave & Time Off",
-    timestamp: new Date(Date.now() - 2 * 86400000),
-  },
-  {
-    id: "5",
-    summary: "Employee asked about payroll schedule and direct deposit...",
-    status: "pending",
-    priority: "high",
-    category: "Payroll & Pay",
-    timestamp: new Date(Date.now() - 3 * 86400000),
-  },
-];
 
 function timeAgo(date: Date): string {
   const hours = Math.floor((Date.now() - date.getTime()) / 3600000);
@@ -66,16 +23,22 @@ function timeAgo(date: Date): string {
   return `${days} days ago`;
 }
 
-const statusColors: Record<RequestStatus, string> = {
-  pending: "text-warning",
-  in_review: "text-info",
-  resolved: "text-success",
+const statusLabels: Record<RequestStatus, string> = {
+  pending: "Pending Review",
+  in_review: "In Review",
+  resolved: "Resolved",
+};
+
+const statusBadgeStyles: Record<RequestStatus, string> = {
+  pending: "border-warning/30 text-warning bg-warning/5",
+  in_review: "border-info/30 text-info bg-info/5",
+  resolved: "border-success/30 text-success bg-success/5",
 };
 
 const priorityColors: Record<string, string> = {
   critical: "bg-destructive/10 text-destructive border-destructive/20",
   high: "bg-warning/10 text-warning border-warning/20",
-  medium: "bg-warning/10 text-warning border-warning/20",
+  medium: "bg-muted text-muted-foreground border-border",
 };
 
 type FilterTab = "all" | "pending" | "in_review" | "resolved";
@@ -83,19 +46,20 @@ type FilterTab = "all" | "pending" | "in_review" | "resolved";
 interface MyRequestsPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  requests: EscalatedRequest[];
 }
 
-export default function MyRequestsPanel({ isOpen, onClose }: MyRequestsPanelProps) {
+export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequestsPanelProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const pendingCount = mockRequests.filter((r) => r.status === "pending").length;
-  const inReviewCount = mockRequests.filter((r) => r.status === "in_review").length;
-  const resolvedCount = mockRequests.filter((r) => r.status === "resolved").length;
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const inReviewCount = requests.filter((r) => r.status === "in_review").length;
+  const resolvedCount = requests.filter((r) => r.status === "resolved").length;
 
   const filtered = activeTab === "all"
-    ? mockRequests
-    : mockRequests.filter((r) => r.status === activeTab);
+    ? requests
+    : requests.filter((r) => r.status === activeTab);
 
   const tabs: { key: FilterTab; label: string }[] = [
     { key: "all", label: "All" },
@@ -118,7 +82,7 @@ export default function MyRequestsPanel({ isOpen, onClose }: MyRequestsPanelProp
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
             <div>
               <h2 className="text-lg font-semibold">My Requests</h2>
-              <p className="text-xs text-muted-foreground">{mockRequests.length} escalated queries</p>
+              <p className="text-xs text-muted-foreground">{requests.length} escalated queries</p>
             </div>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
               <X className="h-4 w-4 text-muted-foreground" />
@@ -162,10 +126,15 @@ export default function MyRequestsPanel({ isOpen, onClose }: MyRequestsPanelProp
 
           {/* Request Cards */}
           <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-3">
+            {filtered.length === 0 && (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No requests yet. Escalate a response to create one.
+              </div>
+            )}
             {filtered.map((req) => (
               <div
                 key={req.id}
-                className="border border-warning/30 rounded-xl p-4 bg-card"
+                className="border rounded-xl p-4 bg-card"
               >
                 <div className="flex items-start gap-2.5">
                   <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -174,9 +143,9 @@ export default function MyRequestsPanel({ isOpen, onClose }: MyRequestsPanelProp
                     <div className="flex items-center gap-1.5 mb-2">
                       <Badge
                         variant="outline"
-                        className="text-[10px] px-1.5 py-0 border-warning/30 text-warning bg-warning/5"
+                        className={`text-[10px] px-1.5 py-0 ${statusBadgeStyles[req.status]}`}
                       >
-                        ● Pending Review
+                        ● {statusLabels[req.status]}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1.5 flex-wrap">

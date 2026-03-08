@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Send, Bot, User, Loader2, ArrowUp, Sparkles, Mail } from "lucide-react";
+import { Loader2, ArrowUp, Sparkles, Mail, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ConversationSidebar from "@/components/ConversationSidebar";
-import MyRequestsPanel from "@/components/MyRequestsPanel";
+import MyRequestsPanel, { type EscalatedRequest } from "@/components/MyRequestsPanel";
+import ChatMessageBubble from "@/components/ChatMessageBubble";
 import CategoryCards from "@/components/CategoryCards";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -81,6 +81,7 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [escalatedRequests, setEscalatedRequests] = useState<EscalatedRequest[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,20 +128,32 @@ export default function ChatPage() {
     setActiveConversation(null);
   };
 
+  const handleEscalate = (msg: Message) => {
+    const userMsg = messages.find(
+      (m) => m.role === "user" && messages.indexOf(m) < messages.indexOf(msg)
+    );
+    const newRequest: EscalatedRequest = {
+      id: `esc-${Date.now()}`,
+      summary: userMsg ? userMsg.content : msg.content.slice(0, 80) + "...",
+      status: "pending",
+      priority: "high",
+      category: "General",
+      timestamp: new Date(),
+    };
+    setEscalatedRequests((prev) => [newRequest, ...prev]);
+  };
+
   const showWelcome = messages.length === 0;
 
   return (
     <div className="min-h-screen flex w-full">
-      {/* Left Sidebar - Conversation History */}
       <ConversationSidebar
         activeConversationId={activeConversation}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
       />
 
-      {/* Main Chat Area */}
       <main className="flex-1 flex flex-col min-w-0 h-screen">
-        {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-3 border-b bg-card">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-base text-primary">PingHR</span>
@@ -153,20 +166,21 @@ export default function ChatPage() {
           >
             <Mail className="h-4 w-4" />
             My Requests
+            {escalatedRequests.length > 0 && (
+              <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                {escalatedRequests.length}
+              </span>
+            )}
           </Button>
         </header>
 
-        {/* Chat Content */}
         <div className="flex-1 overflow-y-auto">
           {showWelcome ? (
             <div className="flex flex-col items-center justify-center px-6 py-12 max-w-3xl mx-auto">
-              {/* Badge */}
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-6">
                 <Sparkles className="h-3.5 w-3.5" />
                 Your HR assistant · Acme Corp
               </div>
-
-              {/* Greeting */}
               <h1 className="text-3xl font-bold mb-3 text-center">
                 Hi {capitalizedName}, what can I help with?
               </h1>
@@ -176,50 +190,12 @@ export default function ChatPage() {
               <p className="text-xs text-muted-foreground text-center mb-10">
                 Sensitive queries are securely escalated to HR Ops.
               </p>
-
-              {/* Category Cards */}
               <CategoryCards onSelectCategory={handleSend} />
             </div>
           ) : (
             <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
               {messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
-                >
-                  {msg.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-lg bg-primary/10 flex-shrink-0 flex items-center justify-center mt-0.5">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
-                  <div
-                    className={`max-w-[75%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                      msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap">
-                      {msg.content.split(/(\*\*.*?\*\*)/).map((part, i) =>
-                        part.startsWith("**") && part.endsWith("**") ? (
-                          <strong key={i}>{part.slice(2, -2)}</strong>
-                        ) : (
-                          <span key={i}>{part}</span>
-                        )
-                      )}
-                    </div>
-                    {msg.escalated && (
-                      <div className="mt-2 px-2 py-1 rounded bg-warning/10 text-warning text-xs font-medium">
-                        ⚠ Low confidence — Escalated to HR
-                      </div>
-                    )}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="h-8 w-8 rounded-lg bg-secondary flex-shrink-0 flex items-center justify-center mt-0.5">
-                      <User className="h-4 w-4 text-secondary-foreground" />
-                    </div>
-                  )}
-                </motion.div>
+                <ChatMessageBubble key={msg.id} msg={msg} onEscalate={handleEscalate} />
               ))}
 
               {isTyping && (
@@ -237,7 +213,6 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Input */}
         <div className="border-t px-6 py-4 max-w-3xl mx-auto w-full">
           <form
             onSubmit={(e) => {
@@ -268,8 +243,7 @@ export default function ChatPage() {
         </div>
       </main>
 
-      {/* Right Panel - My Requests */}
-      <MyRequestsPanel isOpen={requestsOpen} onClose={() => setRequestsOpen(false)} />
+      <MyRequestsPanel isOpen={requestsOpen} onClose={() => setRequestsOpen(false)} requests={escalatedRequests} />
     </div>
   );
 }
