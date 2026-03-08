@@ -7,8 +7,10 @@ import HRConversationSidebar from "@/components/HRConversationSidebar";
 import MyRequestsPanel from "@/components/MyRequestsPanel";
 import ChatMessageBubble from "@/components/ChatMessageBubble";
 import HRCategoryCards from "@/components/HRCategoryCards";
+import TicketActionBar from "@/components/TicketActionBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHRTickets } from "@/contexts/HRTicketsContext";
+import type { ResolutionTag } from "@/contexts/HRTicketsContext";
 import { mockEmployees } from "@/data/mockEmployees";
 import { toast } from "sonner";
 import type { Conversation } from "@/components/ConversationSidebar";
@@ -139,7 +141,7 @@ Help me review this case. Is the AI draft accurate? Are there any policy nuances
 
 export default function HRChat() {
   const { user } = useAuth();
-  const { getAssignedTickets, getAssignedRequests, getTicketById } = useHRTickets();
+  const { getAssignedTickets, getAssignedRequests, getTicketById, addResolutionNote, updateTicketStatus } = useHRTickets();
   const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationMessages, setConversationMessages] = useState<Record<string, Message[]>>({});
@@ -373,6 +375,16 @@ export default function HRChat() {
     setActiveTicketId(null);
   };
 
+  const handleMoveTicketToNext = (note: string, tag: ResolutionTag) => {
+    if (!activeTicketId) return;
+    const ticket = getTicketById(activeTicketId);
+    if (!ticket) return;
+    addResolutionNote(activeTicketId, note, tag);
+    const nextStatus = ticket.status === "in_progress" ? "in_review" : "resolved";
+    updateTicketStatus(activeTicketId, nextStatus as any);
+    toast.success(`Ticket moved to ${nextStatus.replace("_", " ")}`);
+  };
+
   const showWelcome = messages.length === 0 && !isTyping;
   const activeTicket = activeTicketId ? getTicketById(activeTicketId) : null;
 
@@ -415,6 +427,13 @@ export default function HRChat() {
             )}
           </Button>
         </header>
+
+        {activeTicket && (
+          <TicketActionBar
+            ticket={activeTicket}
+            onMoveToNext={handleMoveTicketToNext}
+          />
+        )}
 
         <div className="flex-1 overflow-y-auto">
           {showWelcome ? (
