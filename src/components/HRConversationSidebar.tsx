@@ -156,18 +156,6 @@ export default function HRConversationSidebar({
           ))}
         </div>
 
-        {/* Expand button */}
-        <div className="px-2 py-2 flex justify-center">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCollapsed(false)}>
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
-        </div>
-
         {/* User avatar */}
         <div className="border-t px-2 py-3 flex justify-center">
           <Tooltip>
