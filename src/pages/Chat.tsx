@@ -25,6 +25,45 @@ const mockResponses: Record<string, { content: string; confidence: "high" | "low
   default: { content: "I'm not fully confident in answering this. Let me **escalate to HR Ops** — you'll get a response within 24 hours.\n\n🔄 **Escalated to HR Team**", confidence: "low" },
 };
 
+const mockConversationMessages: Record<string, Message[]> = {
+  "1": [
+    { id: "1-1", role: "user", content: "What is the annual leave policy?", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "1-2", role: "assistant", content: "🏖️ **Annual Leave Policy**\n\n- **Entitlement:** 20 days per year for full-time employees\n- **Probation:** Leave accrues but can't be taken in the first 3 months\n- **Carry-over:** Up to 5 unused days roll into the next year\n- **Approval:** Submit via HR Portal at least 5 business days in advance", timestamp: new Date(Date.now() - 4 * 86400000), confidence: "high" },
+  ],
+  "2": [
+    { id: "2-1", role: "user", content: "What mental health resources are available?", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "2-2", role: "assistant", content: "I'm not fully confident in answering this. Let me **escalate to HR Ops** — you'll get a response within 24 hours.\n\n🔄 **Escalated to HR Team**", timestamp: new Date(Date.now() - 4 * 86400000), confidence: "low", escalated: true },
+  ],
+  "3": [
+    { id: "3-1", role: "user", content: "When is payday and how do I access my payslip?", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "3-2", role: "assistant", content: "💰 **Payroll Info**\n\nNext pay date: **March 15, 2026** (bi-weekly).\n- Direct deposit: Active ✅\n- W-2 for 2025 available in HR Portal", timestamp: new Date(Date.now() - 4 * 86400000), confidence: "high" },
+  ],
+  "4": [
+    { id: "4-1", role: "user", content: "When is payday and how do I view my pay history?", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "4-2", role: "assistant", content: "💰 **Payroll Info**\n\nNext pay date: **March 15, 2026** (bi-weekly).\n- Direct deposit: Active ✅\n- W-2 for 2025 available in HR Portal\n\nYou can view full pay history under **HR Portal → Payroll → Statements**.", timestamp: new Date(Date.now() - 4 * 86400000), confidence: "high" },
+  ],
+  "5": [
+    { id: "5-1", role: "user", content: "What health insurance benefits does Acme offer?", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "5-2", role: "assistant", content: "💊 **Open Enrollment**\n\nNext window: **November 1–15, 2026**. You can change plans, add dependents, and adjust FSA/HSA contributions.", timestamp: new Date(Date.now() - 4 * 86400000), confidence: "high" },
+  ],
+  "6": [
+    { id: "6-1", role: "user", content: "When is payday and how do I update my bank details?", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "6-2", role: "assistant", content: "💰 **Payroll Info**\n\nNext pay date: **March 15, 2026** (bi-weekly).\n- Direct deposit: Active ✅\n\nTo update bank details go to **HR Portal → My Profile → Payment Info**.", timestamp: new Date(Date.now() - 3 * 86400000), confidence: "high" },
+  ],
+  "7": [
+    { id: "7-1", role: "user", content: "Can you explain Acme's payroll schedule?", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "7-2", role: "assistant", content: "💰 **Payroll Schedule**\n\nAcme runs **bi-weekly** payroll (every other Friday).\n- Cut-off for timesheets: Wednesday before payday\n- Direct deposit hits accounts by 9 AM on payday", timestamp: new Date(Date.now() - 3 * 86400000), confidence: "high" },
+  ],
+  "8": [
+    { id: "8-1", role: "user", content: "What leave policies does Acme have?", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "8-2", role: "assistant", content: "🏖️ **Leave Policies**\n\n- **Annual leave:** 20 days/year\n- **Sick leave:** 10 days/year\n- **Parental leave:** 12 weeks paid\n- **Bereavement:** 5 days\n- **Personal days:** 3 days/year", timestamp: new Date(Date.now() - 3 * 86400000), confidence: "high" },
+  ],
+  "9": [
+    { id: "9-1", role: "user", content: "What are Acme's key company holidays?", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "9-2", role: "assistant", content: "I'm not fully confident in answering this. Let me **escalate to HR Ops** — you'll get a response within 24 hours.\n\n🔄 **Escalated to HR Team**", timestamp: new Date(Date.now() - 3 * 86400000), confidence: "low", escalated: true },
+  ],
+};
+
 function getResponse(input: string) {
   const lower = input.toLowerCase();
   if (lower.includes("wfh") || lower.includes("work from home") || lower.includes("remote")) return mockResponses.wfh;
@@ -78,6 +117,11 @@ export default function ChatPage() {
     }, 800 + Math.random() * 700);
   };
 
+  const handleSelectConversation = (id: string) => {
+    setActiveConversation(id);
+    setMessages(mockConversationMessages[id] || []);
+  };
+
   const handleNewConversation = () => {
     setMessages([]);
     setActiveConversation(null);
@@ -90,7 +134,7 @@ export default function ChatPage() {
       {/* Left Sidebar - Conversation History */}
       <ConversationSidebar
         activeConversationId={activeConversation}
-        onSelectConversation={setActiveConversation}
+        onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
       />
 
