@@ -150,6 +150,7 @@ export default function HRChat() {
     const currentMessages = [...messages, userMsg];
     setTimeout(() => {
       const response = getHRResponse(msg, currentMessages);
+      setMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
