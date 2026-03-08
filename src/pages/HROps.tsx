@@ -38,7 +38,7 @@ import HRConversationSidebar from "@/components/HRConversationSidebar";
 import MyRequestsPanel from "@/components/MyRequestsPanel";
 import type { Conversation } from "@/components/ConversationSidebar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useHRTickets } from "@/contexts/HRTicketsContext";
+import { useHRTickets, type ResolutionTag, resolutionTagConfig } from "@/contexts/HRTicketsContext";
 import { toast } from "sonner";
 
 type Priority = "critical" | "high" | "medium";
@@ -79,6 +79,7 @@ export default function HROps() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [resolutionNotes, setResolutionNotes] = useState<Record<string, string>>({});
+  const [resolutionTags, setResolutionTags] = useState<Record<string, ResolutionTag>>({});
 
   const displayName = user?.email?.split("@")[0] ?? "HR User";
   const categories = Array.from(new Set(tickets.map((t) => t.category)));
@@ -111,11 +112,16 @@ export default function HROps() {
 
   const handleMoveToReview = (ticketId: string) => {
     const note = resolutionNotes[ticketId];
+    const tag = resolutionTags[ticketId];
     if (!note?.trim()) {
       toast.error("Please add a resolution note before moving to review.");
       return;
     }
-    addResolutionNote(ticketId, note.trim());
+    if (!tag) {
+      toast.error("Please select a resolution tag before moving to review.");
+      return;
+    }
+    addResolutionNote(ticketId, note.trim(), tag);
     updateTicketStatus(ticketId, "in_review");
     toast.success("Ticket moved to In Review. Waiting for employee confirmation.");
   };
@@ -224,7 +230,14 @@ export default function HROps() {
                           {ticket.question}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">{ticket.category}</Badge>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-xs">{ticket.category}</Badge>
+                            {ticket.resolutionTag && (
+                              <Badge variant="outline" className={`text-xs ${resolutionTagConfig[ticket.resolutionTag].className}`}>
+                                {resolutionTagConfig[ticket.resolutionTag].label}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs gap-1">
@@ -309,17 +322,42 @@ export default function HROps() {
 
                               {/* Resolution Note */}
                               {isAssignedToMe && ["assigned", "in_progress"].includes(ticket.status) && (
-                                <div>
-                                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                    <FileText className="h-3 w-3 inline mr-1" />
-                                    Resolution Note
-                                  </h4>
-                                  <Textarea
-                                    placeholder="Add your resolution note here... (required to move to In Review)"
-                                    value={resolutionNotes[ticket.id] || ""}
-                                    onChange={(e) => setResolutionNotes((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
-                                    className="text-sm min-h-[80px]"
-                                  />
+                                <div className="space-y-3">
+                                  <div>
+                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                                      <FileText className="h-3 w-3 inline mr-1" />
+                                      Resolution Note
+                                    </h4>
+                                    <Textarea
+                                      placeholder="Add your resolution note here... (required to move to In Review)"
+                                      value={resolutionNotes[ticket.id] || ""}
+                                      onChange={(e) => setResolutionNotes((prev) => ({ ...prev, [ticket.id]: e.target.value }))}
+                                      className="text-sm min-h-[80px]"
+                                    />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                                      Resolution Tag
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {(Object.entries(resolutionTagConfig) as [ResolutionTag, { label: string; className: string }][]).map(([key, config]) => (
+                                        <button
+                                          key={key}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setResolutionTags((prev) => ({ ...prev, [ticket.id]: key }));
+                                          }}
+                                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                                            resolutionTags[ticket.id] === key
+                                              ? `${config.className} ring-2 ring-offset-1 ring-current`
+                                              : "border-border text-muted-foreground hover:bg-muted"
+                                          }`}
+                                        >
+                                          {config.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
                                 </div>
                               )}
 

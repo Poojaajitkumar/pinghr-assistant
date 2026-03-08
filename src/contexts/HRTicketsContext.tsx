@@ -4,6 +4,16 @@ import type { EscalatedRequest } from "@/components/MyRequestsPanel";
 type Priority = "critical" | "high" | "medium";
 type TicketStatus = "pending" | "assigned" | "in_progress" | "in_review" | "resolved";
 
+export type ResolutionTag = "needs_info" | "ready" | "in_progress" | "escalated" | "resolved";
+
+export const resolutionTagConfig: Record<ResolutionTag, { label: string; className: string }> = {
+  needs_info: { label: "Needs Info", className: "border-warning/30 text-warning bg-warning/5" },
+  ready: { label: "Ready", className: "border-info/30 text-info bg-info/5" },
+  in_progress: { label: "In Progress", className: "border-primary/30 text-primary bg-primary/5" },
+  escalated: { label: "Escalated", className: "border-destructive/30 text-destructive bg-destructive/5" },
+  resolved: { label: "Resolved", className: "border-success/30 text-success bg-success/5" },
+};
+
 export interface HRTicket {
   id: string;
   employee: string;
@@ -16,6 +26,7 @@ export interface HRTicket {
   assignedTo?: string;
   timeToResolve?: number;
   resolutionNote?: string;
+  resolutionTag?: ResolutionTag;
   inReviewSince?: Date;
   slaHours: number;
 }
@@ -82,7 +93,7 @@ interface HRTicketsContextType {
   tickets: HRTicket[];
   assignTicketToMe: (id: string, displayName: string) => void;
   updateTicketStatus: (id: string, status: TicketStatus) => void;
-  addResolutionNote: (id: string, note: string) => void;
+  addResolutionNote: (id: string, note: string, tag?: ResolutionTag) => void;
   getTicketById: (id: string) => HRTicket | undefined;
   getAssignedTickets: (displayName: string) => HRTicket[];
   getAssignedRequests: (displayName: string) => EscalatedRequest[];
@@ -122,10 +133,10 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const addResolutionNote = (id: string, note: string) => {
+  const addResolutionNote = (id: string, note: string, tag?: ResolutionTag) => {
     setTickets((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, resolutionNote: note } : t
+        t.id === id ? { ...t, resolutionNote: note, resolutionTag: tag } : t
       )
     );
   };
@@ -145,6 +156,7 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
       priority: t.priority,
       category: t.category,
       timestamp: t.timestamp,
+      resolutionTag: t.resolutionTag,
       auditLog: [
         { label: `Assigned to ${displayName}`, timestamp: new Date() },
         { label: "Escalated by employee", timestamp: t.timestamp },
