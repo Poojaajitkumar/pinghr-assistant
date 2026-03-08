@@ -311,7 +311,7 @@ export default function HRChat() {
           ) : (
             <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
               {messages.map((msg) => (
-                <ChatMessageBubble key={msg.id} msg={msg} onEscalate={() => {}} />
+                <ChatMessageBubble key={msg.id} msg={msg} onEscalate={() => {}} showEscalate={false} />
               ))}
               {isTyping && messages[messages.length - 1]?.role !== "assistant" && (
                 <div className="flex gap-3">

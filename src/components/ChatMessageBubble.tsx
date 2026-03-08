@@ -16,18 +16,22 @@ interface Message {
 interface ChatMessageBubbleProps {
   msg: Message;
   onEscalate: (msg: Message) => void;
+  onFeedback?: (msgId: string, feedback: "up" | "down") => void;
+  showEscalate?: boolean;
 }
 
-export default function ChatMessageBubble({ msg, onEscalate }: ChatMessageBubbleProps) {
+export default function ChatMessageBubble({ msg, onEscalate, onFeedback, showEscalate = true }: ChatMessageBubbleProps) {
   const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const [isEscalated, setIsEscalated] = useState(msg.escalated ?? false);
 
   const handleThumbsDown = () => {
     setFeedback("down");
+    onFeedback?.(msg.id, "down");
   };
 
   const handleThumbsUp = () => {
     setFeedback("up");
+    onFeedback?.(msg.id, "up");
   };
 
   const handleEscalate = () => {
@@ -95,8 +99,8 @@ export default function ChatMessageBubble({ msg, onEscalate }: ChatMessageBubble
               <ThumbsDown className="h-3.5 w-3.5" />
             </button>
 
-            {/* Escalate button appears after thumbs down */}
-            {feedback === "down" && (
+            {/* Escalate button appears after thumbs down — only for employee chat */}
+            {feedback === "down" && showEscalate && (
               <motion.div
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
