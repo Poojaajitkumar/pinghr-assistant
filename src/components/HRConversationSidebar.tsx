@@ -53,7 +53,12 @@ export default function HRConversationSidebar({
   const displayName = user?.email?.split("@")[0] ?? "User";
   const displayEmail = user?.email ?? "";
   const [showClearDialog, setShowClearDialog] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem("hr-sidebar-collapsed") === "true");
+
+  const toggleCollapsed = (value: boolean) => {
+    setCollapsed(value);
+    localStorage.setItem("hr-sidebar-collapsed", String(value));
+  };
 
   if (collapsed) {
     return (
