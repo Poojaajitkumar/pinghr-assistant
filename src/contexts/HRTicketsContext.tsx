@@ -143,8 +143,10 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
 
   const getTicketById = (id: string) => tickets.find((t) => t.id === id);
 
-  const getAssignedTickets = (displayName: string) =>
-    tickets.filter((t) => t.assignedTo === displayName);
+  const getAssignedTickets = (displayName: string) => {
+    const normalizedName = displayName.trim().toLowerCase();
+    return tickets.filter((t) => t.assignedTo?.trim().toLowerCase() === normalizedName);
+  };
 
   const getAssignedRequests = (displayName: string): EscalatedRequest[] =>
     getAssignedTickets(displayName).map((t) => ({
