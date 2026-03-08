@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot } from "lucide-react";
+import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot, ArrowRight, Timer, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 type RequestStatus = "pending" | "in_review" | "resolved";
@@ -63,12 +65,23 @@ interface MyRequestsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   requests: EscalatedRequest[];
+  onWorkOnRequest?: (requestId: string) => void;
 }
 
-export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequestsPanelProps) {
+export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnRequest }: MyRequestsPanelProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAiResponseId, setShowAiResponseId] = useState<string | null>(null);
+
+  const handleWorkOn = (reqId: string) => {
+    if (onWorkOnRequest) {
+      onWorkOnRequest(reqId);
+    } else {
+      navigate(`/hr-chat?ticket=${reqId}`);
+    }
+    onClose();
+  };
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const inReviewCount = requests.filter((r) => r.status === "in_review").length;
