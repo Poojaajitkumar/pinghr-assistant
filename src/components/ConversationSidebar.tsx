@@ -57,7 +57,7 @@ export default function ConversationSidebar({
   const [showClearDialog, setShowClearDialog] = useState(false);
 
   return (
-    <aside className="w-72 border-r bg-card flex flex-col h-full">
+    <aside className="w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden">
       {/* Branding */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
