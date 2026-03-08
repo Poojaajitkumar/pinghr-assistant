@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot, ArrowRight, Timer, CheckCircle2 } from "lucide-react";
+import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot, ArrowRight, Timer, CheckCircle2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import type { ResolutionTag } from "@/contexts/HRTicketsContext";
+import { resolutionTagConfig } from "@/contexts/HRTicketsContext";
 
 type RequestStatus = "pending" | "in_review" | "resolved";
 
@@ -22,6 +24,7 @@ export interface EscalatedRequest {
   category: string;
   timestamp: Date;
   auditLog: AuditEvent[];
+  resolutionTag?: ResolutionTag;
 }
 
 function timeAgo(date: Date): string {
@@ -196,6 +199,15 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                             {req.category}
                           </Badge>
+                          {req.resolutionTag && (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 gap-0.5 ${resolutionTagConfig[req.resolutionTag].className}`}
+                            >
+                              <Tag className="h-2.5 w-2.5" />
+                              {resolutionTagConfig[req.resolutionTag].label}
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">{timeAgo(req.timestamp)}</p>
                       </div>
