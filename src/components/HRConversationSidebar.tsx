@@ -59,18 +59,10 @@ export default function HRConversationSidebar({
     return (
       <aside className="w-16 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
         {/* Branding - icon only */}
-        <div className="px-3 pt-5 pb-4 flex items-center justify-between">
+        <div className="px-3 pt-5 pb-4 flex items-center justify-center">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-sm font-bold text-primary-foreground">P</span>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCollapsed(false)}>
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
         </div>
 
         {/* Nav Links - icons only */}
@@ -156,17 +148,27 @@ export default function HRConversationSidebar({
           ))}
         </div>
 
-        {/* User avatar */}
-        <div className="border-t px-2 py-3 flex justify-center">
+        {/* Toggle + User */}
+        <div className="border-t px-2 py-2 space-y-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="w-full h-8" onClick={() => setCollapsed(false)}>
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={signOut}
-                className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity"
+                className="w-full flex justify-center py-1"
               >
-                <span className="text-xs font-semibold text-primary-foreground">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
+                <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity">
+                  <span className="text-xs font-semibold text-primary-foreground">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Sign out ({displayEmail})</TooltipContent>
@@ -187,9 +189,6 @@ export default function HRConversationSidebar({
           <span className="font-semibold text-base tracking-tight">PingHR</span>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">HR Portal</p>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => setCollapsed(true)}>
-          <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
-        </Button>
       </div>
 
       {/* HR Nav Links */}
@@ -321,8 +320,15 @@ export default function HRConversationSidebar({
         ))}
       </div>
 
-      {/* User Profile */}
-      <div className="border-t px-4 py-3">
+      {/* Toggle + User Profile */}
+      <div className="border-t px-3 py-3 space-y-1">
+        <button
+          onClick={() => setCollapsed(true)}
+          className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground"
+        >
+          <PanelLeftClose className="h-4 w-4" />
+          <span className="text-sm">Collapse</span>
+        </button>
         <button
           onClick={signOut}
           className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/60 transition-colors"
