@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import type { EscalatedRequest } from "@/components/MyRequestsPanel";
 
 type Priority = "critical" | "high" | "medium";
-type TicketStatus = "pending" | "assigned" | "in_review" | "resolved";
+type TicketStatus = "pending" | "assigned" | "in_progress" | "in_review" | "resolved";
 
 export interface HRTicket {
   id: string;
@@ -15,6 +15,9 @@ export interface HRTicket {
   timestamp: Date;
   assignedTo?: string;
   timeToResolve?: number;
+  resolutionNote?: string;
+  inReviewSince?: Date;
+  slaHours: number;
 }
 
 const initialTickets: HRTicket[] = [
@@ -27,6 +30,7 @@ const initialTickets: HRTicket[] = [
     priority: "critical",
     category: "Leave & Time Off",
     timestamp: new Date(Date.now() - 2 * 3600000),
+    slaHours: 48,
   },
   {
     id: "2",
@@ -37,6 +41,7 @@ const initialTickets: HRTicket[] = [
     priority: "high",
     category: "Compensation",
     timestamp: new Date(Date.now() - 5 * 3600000),
+    slaHours: 48,
   },
   {
     id: "3",
@@ -47,6 +52,7 @@ const initialTickets: HRTicket[] = [
     priority: "medium",
     category: "Career Development",
     timestamp: new Date(Date.now() - 86400000),
+    slaHours: 48,
   },
   {
     id: "4",
@@ -57,6 +63,7 @@ const initialTickets: HRTicket[] = [
     priority: "medium",
     category: "Benefits",
     timestamp: new Date(Date.now() - 2 * 86400000),
+    slaHours: 48,
   },
   {
     id: "5",
@@ -67,6 +74,7 @@ const initialTickets: HRTicket[] = [
     priority: "medium",
     category: "Payroll & Pay",
     timestamp: new Date(Date.now() - 3 * 86400000),
+    slaHours: 48,
   },
 ];
 
@@ -74,6 +82,8 @@ interface HRTicketsContextType {
   tickets: HRTicket[];
   assignTicketToMe: (id: string, displayName: string) => void;
   updateTicketStatus: (id: string, status: TicketStatus) => void;
+  addResolutionNote: (id: string, note: string) => void;
+  getTicketById: (id: string) => HRTicket | undefined;
   getAssignedTickets: (displayName: string) => HRTicket[];
   getAssignedRequests: (displayName: string) => EscalatedRequest[];
 }
@@ -104,12 +114,23 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
           ? {
               ...t,
               status,
+              inReviewSince: status === "in_review" ? new Date() : t.inReviewSince,
               timeToResolve: status === "resolved" ? Math.floor(Math.random() * 60 + 15) : t.timeToResolve,
             }
           : t
       )
     );
   };
+
+  const addResolutionNote = (id: string, note: string) => {
+    setTickets((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, resolutionNote: note } : t
+      )
+    );
+  };
+
+  const getTicketById = (id: string) => tickets.find((t) => t.id === id);
 
   const getAssignedTickets = (displayName: string) =>
     tickets.filter((t) => t.assignedTo === displayName);
@@ -131,7 +152,7 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
     }));
 
   return (
-    <HRTicketsContext.Provider value={{ tickets, assignTicketToMe, updateTicketStatus, getAssignedTickets, getAssignedRequests }}>
+    <HRTicketsContext.Provider value={{ tickets, assignTicketToMe, updateTicketStatus, addResolutionNote, getTicketById, getAssignedTickets, getAssignedRequests }}>
       {children}
     </HRTicketsContext.Provider>
   );
