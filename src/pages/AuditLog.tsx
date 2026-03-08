@@ -104,6 +104,7 @@ const stats = [
 export default function AuditLog() {
   const { user } = useAuth();
   const { getAssignedTickets, getAssignedRequests } = useHRTickets();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [requestsOpen, setRequestsOpen] = useState(false);
@@ -118,7 +119,7 @@ export default function AuditLog() {
         activeConversationId={activeConversation}
         conversations={conversations}
         onSelectConversation={setActiveConversation}
-        onNewConversation={() => setActiveConversation(null)}
+        onNewConversation={() => navigate("/hr-chat")}
         onDeleteConversation={(id) => {
           setConversations((prev) => prev.filter((c) => c.id !== id));
           if (activeConversation === id) setActiveConversation(null);
