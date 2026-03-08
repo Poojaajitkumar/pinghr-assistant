@@ -154,7 +154,7 @@ export default function HRChat() {
             onClick={() => setRequestsOpen(true)}
           >
             <Mail className="h-4 w-4" />
-            My Assigned
+            My Requests
             {assignedTickets.length > 0 && (
               <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
                 {assignedTickets.length}
