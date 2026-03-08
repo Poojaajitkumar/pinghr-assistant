@@ -156,6 +156,7 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
       priority: t.priority,
       category: t.category,
       timestamp: t.timestamp,
+      resolutionTag: t.resolutionTag,
       auditLog: [
         { label: `Assigned to ${displayName}`, timestamp: new Date() },
         { label: "Escalated by employee", timestamp: t.timestamp },
