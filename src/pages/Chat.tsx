@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Loader2, ArrowUp, Sparkles, Mail, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ConversationSidebar from "@/components/ConversationSidebar";
+import ConversationSidebar, { type Conversation } from "@/components/ConversationSidebar";
 import MyRequestsPanel, { type EscalatedRequest } from "@/components/MyRequestsPanel";
 import ChatMessageBubble from "@/components/ChatMessageBubble";
 import CategoryCards from "@/components/CategoryCards";
@@ -82,6 +82,17 @@ export default function ChatPage() {
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [escalatedRequests, setEscalatedRequests] = useState<EscalatedRequest[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([
+    { id: "1", preview: "What is the annual leave poli...", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "2", preview: "What mental health resource...", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "3", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "4", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "5", preview: "What health insurance benef...", timestamp: new Date(Date.now() - 4 * 86400000) },
+    { id: "6", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "7", preview: "Can you explain Acme's payr...", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "8", preview: "What leave policies does Ac...", timestamp: new Date(Date.now() - 3 * 86400000) },
+    { id: "9", preview: "What are Acme's key compa...", timestamp: new Date(Date.now() - 3 * 86400000) },
+  ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -128,6 +139,20 @@ export default function ChatPage() {
     setActiveConversation(null);
   };
 
+  const handleDeleteConversation = (id: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (activeConversation === id) {
+      setMessages([]);
+      setActiveConversation(null);
+    }
+  };
+
+  const handleClearAll = () => {
+    setConversations([]);
+    setMessages([]);
+    setActiveConversation(null);
+  };
+
   const handleEscalate = (msg: Message) => {
     const msgIdx = messages.indexOf(msg);
     const userMsg = [...messages].slice(0, msgIdx).reverse().find((m) => m.role === "user");
@@ -168,8 +193,11 @@ export default function ChatPage() {
     <div className="min-h-screen flex w-full">
       <ConversationSidebar
         activeConversationId={activeConversation}
+        conversations={conversations}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+        onClearAll={handleClearAll}
       />
 
       <main className="flex-1 flex flex-col min-w-0 h-screen">

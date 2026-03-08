@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface Conversation {
   id: string;
@@ -9,18 +20,6 @@ export interface Conversation {
   timestamp: Date;
   isActive?: boolean;
 }
-
-const mockConversations: Conversation[] = [
-  { id: "1", preview: "What is the annual leave poli...", timestamp: new Date(Date.now() - 4 * 86400000) },
-  { id: "2", preview: "What mental health resource...", timestamp: new Date(Date.now() - 4 * 86400000) },
-  { id: "3", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 4 * 86400000) },
-  { id: "4", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 4 * 86400000) },
-  { id: "5", preview: "What health insurance benef...", timestamp: new Date(Date.now() - 4 * 86400000) },
-  { id: "6", preview: "When is payday and how do ...", timestamp: new Date(Date.now() - 3 * 86400000) },
-  { id: "7", preview: "Can you explain Acme's payr...", timestamp: new Date(Date.now() - 3 * 86400000) },
-  { id: "8", preview: "What leave policies does Ac...", timestamp: new Date(Date.now() - 3 * 86400000) },
-  { id: "9", preview: "What are Acme's key compa...", timestamp: new Date(Date.now() - 3 * 86400000) },
-];
 
 function timeAgo(date: Date): string {
   const days = Math.floor((Date.now() - date.getTime()) / 86400000);
@@ -31,14 +30,20 @@ function timeAgo(date: Date): string {
 
 interface ConversationSidebarProps {
   activeConversationId: string | null;
+  conversations: Conversation[];
   onSelectConversation: (id: string) => void;
   onNewConversation: () => void;
+  onDeleteConversation: (id: string) => void;
+  onClearAll: () => void;
 }
 
 export default function ConversationSidebar({
   activeConversationId,
+  conversations,
   onSelectConversation,
   onNewConversation,
+  onDeleteConversation,
+  onClearAll,
 }: ConversationSidebarProps) {
   const { user, signOut } = useAuth();
   const displayName = user?.email?.split("@")[0] ?? "User";
@@ -68,27 +73,80 @@ export default function ConversationSidebar({
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto px-3 space-y-0.5">
-        {mockConversations.map((conv) => (
-          <button
+        {conversations.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-6">No conversations yet</p>
+        )}
+        {conversations.map((conv) => (
+          <div
             key={conv.id}
-            onClick={() => onSelectConversation(conv.id)}
-            className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
-              activeConversationId === conv.id
-                ? "bg-accent text-accent-foreground"
-                : "hover:bg-muted/60"
-            }`}
+            className="group relative"
           >
-            <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm truncate">{conv.preview}</p>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                <span className="text-xs text-muted-foreground">{timeAgo(conv.timestamp)}</span>
+            <button
+              onClick={() => onSelectConversation(conv.id)}
+              className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                activeConversationId === conv.id
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-muted/60"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm truncate pr-6">{conv.preview}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="text-xs text-muted-foreground">{timeAgo(conv.timestamp)}</span>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+            {/* Delete button on hover */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteConversation(conv.id);
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+              title="Delete conversation"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ))}
       </div>
+
+      {/* Clear All */}
+      {conversations.length > 0 && (
+        <div className="px-4 py-2 border-t">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear all conversations
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Clear all conversations?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all {conversations.length} conversations. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onClearAll}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Clear all
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
 
       {/* User Profile */}
       <div className="border-t px-4 py-3">

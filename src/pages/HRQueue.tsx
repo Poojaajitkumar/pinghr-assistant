@@ -119,8 +119,11 @@ export default function HRQueue() {
     <div className="min-h-screen flex w-full">
       <ConversationSidebar
         activeConversationId={activeConversation}
+        conversations={[]}
         onSelectConversation={setActiveConversation}
         onNewConversation={() => setActiveConversation(null)}
+        onDeleteConversation={() => {}}
+        onClearAll={() => {}}
       />
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-auto">
         <header className="flex items-center px-6 py-3 border-b bg-card">
