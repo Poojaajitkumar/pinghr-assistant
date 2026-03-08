@@ -331,7 +331,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
                               </div>
                             )}
                             {req.status === "resolved" && (
-                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-600">
+                              <div className="flex items-center gap-2 px-3 py-2 bg-success/5 rounded-lg border border-success/20 text-xs text-success">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
                                 Resolved
                               </div>
