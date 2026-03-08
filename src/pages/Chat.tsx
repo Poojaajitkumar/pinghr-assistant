@@ -129,19 +129,38 @@ export default function ChatPage() {
   };
 
   const handleEscalate = (msg: Message) => {
-    const userMsg = messages.find(
-      (m) => m.role === "user" && messages.indexOf(m) < messages.indexOf(msg)
-    );
+    const msgIdx = messages.indexOf(msg);
+    const userMsg = [...messages].slice(0, msgIdx).reverse().find((m) => m.role === "user");
+    const queryText = userMsg?.content ?? "Unknown query";
+    const now = new Date();
+
     const newRequest: EscalatedRequest = {
       id: `esc-${Date.now()}`,
-      summary: userMsg ? userMsg.content : msg.content.slice(0, 80) + "...",
+      summary: queryText.length > 50 ? queryText.slice(0, 50) + "..." : queryText,
+      fullSummary: `Employee asked about ${queryText.toLowerCase()}. Agent provided a response but the employee was not satisfied and escalated for human review.`,
+      aiResponse: msg.content,
       status: "pending",
       priority: "high",
-      category: "General",
-      timestamp: new Date(),
+      category: detectCategory(queryText),
+      timestamp: now,
+      auditLog: [
+        { label: "Escalated to HR by employee", timestamp: now },
+        { label: "AI response generated", timestamp: new Date(msg.timestamp) },
+        { label: "Query submitted", timestamp: new Date(userMsg?.timestamp ?? now) },
+      ].reverse(),
     };
     setEscalatedRequests((prev) => [newRequest, ...prev]);
   };
+
+  function detectCategory(text: string): string {
+    const lower = text.toLowerCase();
+    if (lower.includes("leave") || lower.includes("pto") || lower.includes("vacation") || lower.includes("time off")) return "Leave & Time Off";
+    if (lower.includes("pay") || lower.includes("salary") || lower.includes("payroll")) return "Payroll & Pay";
+    if (lower.includes("benefit") || lower.includes("insurance") || lower.includes("health") || lower.includes("enrollment")) return "Benefits";
+    if (lower.includes("expense") || lower.includes("reimburs")) return "Expenses";
+    if (lower.includes("wfh") || lower.includes("remote") || lower.includes("work from home")) return "Company Policy";
+    return "General";
+  }
 
   const showWelcome = messages.length === 0;
 
