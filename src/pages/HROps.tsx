@@ -57,6 +57,7 @@ type FilterCategory = "all" | string;
 export default function HROps() {
   const { user } = useAuth();
   const { tickets, assignTicketToMe, updateTicketStatus, getAssignedTickets, getAssignedRequests } = useHRTickets();
+  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("all");
   const [requestsOpen, setRequestsOpen] = useState(false);
@@ -82,7 +83,7 @@ export default function HROps() {
         activeConversationId={activeConversation}
         conversations={conversations}
         onSelectConversation={setActiveConversation}
-        onNewConversation={() => setActiveConversation(null)}
+        onNewConversation={() => navigate("/hr-chat")}
         onDeleteConversation={(id) => {
           setConversations((prev) => prev.filter((c) => c.id !== id));
           if (activeConversation === id) setActiveConversation(null);
