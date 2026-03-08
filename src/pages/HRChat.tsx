@@ -131,19 +131,31 @@ export default function HRChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Helper to update messages and sync to conversationMessages
+  const updateMessages = useCallback((convId: string | null, updater: (prev: Message[]) => Message[]) => {
+    setMessages((prev) => {
+      const next = updater(prev);
+      if (convId) {
+        setConversationMessages((cm) => ({ ...cm, [convId]: next }));
+      }
+      return next;
+    });
+  }, []);
+
   const handleSend = useCallback(async (text?: string) => {
     const msg = text || input.trim();
     if (!msg || isTyping) return;
 
-    if (!activeConversation) {
-      const newId = `conv-${Date.now()}`;
+    let convId = activeConversation;
+    if (!convId) {
+      convId = `conv-${Date.now()}`;
       const preview = msg.length > 30 ? msg.slice(0, 30) + "..." : msg;
-      setConversations((prev) => [{ id: newId, preview, timestamp: new Date() }, ...prev]);
-      setActiveConversation(newId);
+      setConversations((prev) => [{ id: convId!, preview, timestamp: new Date() }, ...prev]);
+      setActiveConversation(convId);
     }
 
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: msg, timestamp: new Date() };
-    setMessages((prev) => [...prev, userMsg]);
+    updateMessages(convId, (prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
@@ -154,13 +166,14 @@ export default function HRChat() {
     }));
 
     let assistantContent = "";
+    const currentConvId = convId;
 
     try {
       await streamChat({
         messages: history,
         onDelta: (chunk) => {
           assistantContent += chunk;
-          setMessages((prev) => {
+          updateMessages(currentConvId, (prev) => {
             const last = prev[prev.length - 1];
             if (last?.role === "assistant" && last.id.startsWith("stream-")) {
               return prev.map((m, i) =>
@@ -187,7 +200,7 @@ export default function HRChat() {
       console.error("Stream error:", e);
       setIsTyping(false);
       if (!assistantContent) {
-        setMessages((prev) => [
+        updateMessages(currentConvId, (prev) => [
           ...prev,
           {
             id: `err-${Date.now()}`,
@@ -199,20 +212,33 @@ export default function HRChat() {
         ]);
       }
     }
-  }, [input, isTyping, activeConversation, messages]);
+  }, [input, isTyping, activeConversation, messages, updateMessages]);
 
   const handleSelectConversation = (id: string) => {
+    // Save current conversation messages before switching
+    if (activeConversation && messages.length > 0) {
+      setConversationMessages((cm) => ({ ...cm, [activeConversation]: messages }));
+    }
     setActiveConversation(id);
-    setMessages([]);
+    setMessages(conversationMessages[id] || []);
   };
 
   const handleNewConversation = () => {
+    // Save current conversation messages before creating new
+    if (activeConversation && messages.length > 0) {
+      setConversationMessages((cm) => ({ ...cm, [activeConversation]: messages }));
+    }
     setMessages([]);
     setActiveConversation(null);
   };
 
   const handleDeleteConversation = (id: string) => {
     setConversations((prev) => prev.filter((c) => c.id !== id));
+    setConversationMessages((cm) => {
+      const next = { ...cm };
+      delete next[id];
+      return next;
+    });
     if (activeConversation === id) {
       setMessages([]);
       setActiveConversation(null);
@@ -221,6 +247,7 @@ export default function HRChat() {
 
   const handleClearAll = () => {
     setConversations([]);
+    setConversationMessages({});
     setMessages([]);
     setActiveConversation(null);
   };
