@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { Loader2, ArrowUp, Sparkles, Mail, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HRConversationSidebar from "@/components/HRConversationSidebar";
-import MyRequestsPanel, { type EscalatedRequest } from "@/components/MyRequestsPanel";
+import MyRequestsPanel from "@/components/MyRequestsPanel";
 import ChatMessageBubble from "@/components/ChatMessageBubble";
 import HRCategoryCards from "@/components/HRCategoryCards";
 import { useAuth } from "@/contexts/AuthContext";
+import { useHRTickets } from "@/contexts/HRTicketsContext";
 import type { Conversation } from "@/components/ConversationSidebar";
 
 interface Message {
@@ -51,18 +52,20 @@ function getHRResponse(input: string) {
 
 export default function HRChat() {
   const { user } = useAuth();
+  const { getAssignedTickets, getAssignedRequests } = useHRTickets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
-  const [assignedRequests, setAssignedRequests] = useState<EscalatedRequest[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const displayName = user?.email?.split("@")[0] ?? "there";
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const assignedTickets = getAssignedTickets(displayName);
+  const assignedRequests = getAssignedRequests(displayName);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -135,7 +138,7 @@ export default function HRChat() {
         onNewConversation={handleNewConversation}
         onDeleteConversation={handleDeleteConversation}
         onClearAll={handleClearAll}
-        assignedCount={assignedRequests.length}
+        assignedCount={assignedTickets.length}
       />
 
       <main className="flex-1 flex flex-col min-w-0 h-screen">
@@ -152,9 +155,9 @@ export default function HRChat() {
           >
             <Mail className="h-4 w-4" />
             My Assigned
-            {assignedRequests.length > 0 && (
+            {assignedTickets.length > 0 && (
               <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
-                {assignedRequests.length}
+                {assignedTickets.length}
               </span>
             )}
           </Button>
