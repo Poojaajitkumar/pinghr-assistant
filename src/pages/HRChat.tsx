@@ -375,6 +375,16 @@ export default function HRChat() {
     setActiveTicketId(null);
   };
 
+  const handleMoveTicketToNext = (note: string, tag: ResolutionTag) => {
+    if (!activeTicketId) return;
+    const ticket = getTicketById(activeTicketId);
+    if (!ticket) return;
+    addResolutionNote(activeTicketId, note, tag);
+    const nextStatus = ticket.status === "in_progress" ? "in_review" : "resolved";
+    updateTicketStatus(activeTicketId, nextStatus as any);
+    toast.success(`Ticket moved to ${nextStatus.replace("_", " ")}`);
+  };
+
   const showWelcome = messages.length === 0 && !isTyping;
   const activeTicket = activeTicketId ? getTicketById(activeTicketId) : null;
 
