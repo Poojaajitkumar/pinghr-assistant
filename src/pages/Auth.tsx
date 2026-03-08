@@ -26,7 +26,7 @@ export default function Auth() {
   }
 
   if (session && role) {
-    return <Navigate to={role === "hr" ? "/hr-queue" : "/"} replace />;
+    return <Navigate to={role === "hr" ? "/hr-chat" : "/chat"} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
