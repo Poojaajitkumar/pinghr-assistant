@@ -230,7 +230,14 @@ export default function HROps() {
                           {ticket.question}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">{ticket.category}</Badge>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-xs">{ticket.category}</Badge>
+                            {ticket.resolutionTag && (
+                              <Badge variant="outline" className={`text-xs ${resolutionTagConfig[ticket.resolutionTag].className}`}>
+                                {resolutionTagConfig[ticket.resolutionTag].label}
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant="secondary" className="text-xs gap-1">
