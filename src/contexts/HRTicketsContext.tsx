@@ -152,7 +152,7 @@ export function HRTicketsProvider({ children }: { children: ReactNode }) {
       summary: t.question.length > 50 ? t.question.slice(0, 50) + "..." : t.question,
       fullSummary: `${t.employee} asked: "${t.question}". AI drafted a response pending your review.`,
       aiResponse: t.aiDraft,
-      status: t.status === "resolved" ? "resolved" : t.status === "in_review" ? "in_review" : "pending",
+      status: t.status === "resolved" ? "resolved" : t.status === "in_review" ? "in_review" : t.status === "in_progress" ? "in_progress" : "pending",
       priority: t.priority,
       category: t.category,
       timestamp: t.timestamp,

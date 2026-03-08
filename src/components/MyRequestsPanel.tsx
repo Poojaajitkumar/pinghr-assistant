@@ -314,14 +314,14 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
 
                           {/* Action buttons based on status */}
                           <div className="pt-1">
-                            {req.status === "pending" && (
+                            {(req.status === "pending" || req.status === "in_progress") && (
                               <Button
                                 size="sm"
                                 className="w-full gap-2 text-xs"
                                 onClick={() => handleWorkOn(req.id)}
                               >
                                 <ArrowRight className="h-3.5 w-3.5" />
-                                Work on this
+                                {req.status === "in_progress" ? "Continue working" : "Work on this"}
                               </Button>
                             )}
                             {req.status === "in_review" && (
