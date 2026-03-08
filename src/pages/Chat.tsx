@@ -234,7 +234,8 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto">
           {showWelcome ? (
-            <div className="flex flex-col items-center justify-center px-6 py-12 max-w-3xl mx-auto">
+            <div className="flex flex-col items-center justify-center px-6 py-12 max-w-3xl mx-auto min-h-full">
+              <div className="flex-1" />
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-6">
                 <Sparkles className="h-3.5 w-3.5" />
                 Your HR assistant · Acme Corp
@@ -249,6 +250,7 @@ export default function ChatPage() {
                 Sensitive queries are securely escalated to HR Ops.
               </p>
               <CategoryCards onSelectCategory={handleSend} />
+              <div className="flex-1" />
             </div>
           ) : (
             <div className="max-w-3xl mx-auto px-6 py-6 space-y-4">
