@@ -107,6 +107,17 @@ export default function ChatPage() {
     const msg = text || input.trim();
     if (!msg || isTyping) return;
 
+    // If no active conversation, create one
+    if (!activeConversation) {
+      const newId = `conv-${Date.now()}`;
+      const preview = msg.length > 30 ? msg.slice(0, 30) + "..." : msg;
+      setConversations((prev) => [
+        { id: newId, preview, timestamp: new Date() },
+        ...prev,
+      ]);
+      setActiveConversation(newId);
+    }
+
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: msg, timestamp: new Date() };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
