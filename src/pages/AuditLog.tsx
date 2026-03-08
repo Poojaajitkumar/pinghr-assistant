@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ConversationSidebar from "@/components/ConversationSidebar";
+import HRConversationSidebar from "@/components/HRConversationSidebar";
+import type { Conversation } from "@/components/ConversationSidebar";
 
 const logs = [
   { id: "1", timestamp: "2026-03-03 09:15", employee: "Jordan Lee", query: "Unpaid leave for family care", action: "Escalated to HR", confidence: "low" as const, resolution: "Pending" },
@@ -23,17 +24,21 @@ const logs = [
 ];
 
 export default function AuditLog() {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen flex w-full">
-      <ConversationSidebar
+      <HRConversationSidebar
         activeConversationId={activeConversation}
-        conversations={[]}
+        conversations={conversations}
         onSelectConversation={setActiveConversation}
         onNewConversation={() => setActiveConversation(null)}
-        onDeleteConversation={() => {}}
-        onClearAll={() => {}}
+        onDeleteConversation={(id) => {
+          setConversations((prev) => prev.filter((c) => c.id !== id));
+          if (activeConversation === id) setActiveConversation(null);
+        }}
+        onClearAll={() => { setConversations([]); setActiveConversation(null); }}
       />
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-auto">
         <header className="flex items-center px-6 py-3 border-b bg-card">
