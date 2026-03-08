@@ -147,9 +147,9 @@ export default function HRChat() {
     setInput("");
     setIsTyping(true);
 
+    const currentMessages = [...messages, userMsg];
     setTimeout(() => {
-      const response = getHRResponse(msg);
-      setMessages((prev) => [
+      const response = getHRResponse(msg, currentMessages);
         ...prev,
         {
           id: (Date.now() + 1).toString(),
