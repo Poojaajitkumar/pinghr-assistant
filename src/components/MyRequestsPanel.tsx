@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot } from "lucide-react";
+import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot, ArrowRight, Timer, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 type RequestStatus = "pending" | "in_review" | "resolved";
@@ -63,12 +65,23 @@ interface MyRequestsPanelProps {
   isOpen: boolean;
   onClose: () => void;
   requests: EscalatedRequest[];
+  onWorkOnRequest?: (requestId: string) => void;
 }
 
-export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequestsPanelProps) {
+export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnRequest }: MyRequestsPanelProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAiResponseId, setShowAiResponseId] = useState<string | null>(null);
+
+  const handleWorkOn = (reqId: string) => {
+    if (onWorkOnRequest) {
+      onWorkOnRequest(reqId);
+    } else {
+      navigate(`/hr-chat?ticket=${reqId}`);
+    }
+    onClose();
+  };
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const inReviewCount = requests.filter((r) => r.status === "in_review").length;
@@ -277,6 +290,32 @@ export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequest
                                 </div>
                               ))}
                             </div>
+                          </div>
+
+                          {/* Action buttons based on status */}
+                          <div className="pt-1">
+                            {req.status === "pending" && (
+                              <Button
+                                size="sm"
+                                className="w-full gap-2 text-xs"
+                                onClick={() => handleWorkOn(req.id)}
+                              >
+                                <ArrowRight className="h-3.5 w-3.5" />
+                                Work on this
+                              </Button>
+                            )}
+                            {req.status === "in_review" && (
+                              <div className="flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg border text-xs text-muted-foreground">
+                                <Timer className="h-3.5 w-3.5" />
+                                Waiting for employee confirmation · SLA active
+                              </div>
+                            )}
+                            {req.status === "resolved" && (
+                              <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-600">
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                Resolved
+                              </div>
+                            )}
                           </div>
                         </div>
                       </motion.div>

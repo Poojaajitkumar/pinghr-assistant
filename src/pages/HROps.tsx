@@ -397,7 +397,7 @@ export default function HROps() {
         </div>
       </main>
 
-      <MyRequestsPanel isOpen={requestsOpen} onClose={() => setRequestsOpen(false)} requests={assignedRequests} />
+      <MyRequestsPanel isOpen={requestsOpen} onClose={() => setRequestsOpen(false)} requests={assignedRequests} onWorkOnRequest={handleWorkOnThis} />
     </div>
   );
 }
