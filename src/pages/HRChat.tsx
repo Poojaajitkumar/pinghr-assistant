@@ -155,7 +155,7 @@ export default function HRChat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const displayName = user?.email?.split("@")[0] ?? "there";
+  const displayName = user?.email?.split("@")[0] ?? "HR User";
   const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
   const assignedTickets = getAssignedTickets(displayName);
   const assignedRequests = getAssignedRequests(displayName);
