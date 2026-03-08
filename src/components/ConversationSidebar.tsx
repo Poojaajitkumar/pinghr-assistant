@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { MessageSquare, Plus, Trash2, X } from "lucide-react";
+import { MessageSquare, Plus, Trash2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -13,6 +12,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 export interface Conversation {
   id: string;
@@ -48,6 +54,7 @@ export default function ConversationSidebar({
   const { user, signOut } = useAuth();
   const displayName = user?.email?.split("@")[0] ?? "User";
   const displayEmail = user?.email ?? "";
+  const [showClearDialog, setShowClearDialog] = useState(false);
 
   return (
     <aside className="w-72 border-r bg-card flex flex-col h-full">
@@ -59,17 +66,59 @@ export default function ConversationSidebar({
         <span className="font-semibold text-base tracking-tight">PingHR</span>
       </div>
 
-      {/* New Conversation */}
-      <div className="px-4 pb-3">
+      {/* New Conversation + More menu */}
+      <div className="px-4 pb-3 flex items-center gap-1.5">
         <Button
           variant="outline"
-          className="w-full justify-start gap-2 text-sm font-normal h-10"
+          className="flex-1 justify-start gap-2 text-sm font-normal h-10"
           onClick={onNewConversation}
         >
           <Plus className="h-4 w-4" />
           New conversation
         </Button>
+        {conversations.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0">
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive gap-2 text-sm"
+                onClick={() => setShowClearDialog(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Clear all conversations
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+
+      {/* Clear all confirmation dialog */}
+      <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all conversations?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all {conversations.length} conversations. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onClearAll();
+                setShowClearDialog(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Clear all
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto px-3 space-y-0.5">
@@ -77,10 +126,7 @@ export default function ConversationSidebar({
           <p className="text-sm text-muted-foreground text-center py-6">No conversations yet</p>
         )}
         {conversations.map((conv) => (
-          <div
-            key={conv.id}
-            className="group relative"
-          >
+          <div key={conv.id} className="group relative">
             <button
               onClick={() => onSelectConversation(conv.id)}
               className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
@@ -98,7 +144,6 @@ export default function ConversationSidebar({
                 </div>
               </div>
             </button>
-            {/* Delete button on hover */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -112,41 +157,6 @@ export default function ConversationSidebar({
           </div>
         ))}
       </div>
-
-      {/* Clear All */}
-      {conversations.length > 0 && (
-        <div className="px-4 py-2 border-t">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Clear all conversations
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Clear all conversations?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete all {conversations.length} conversations. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={onClearAll}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Clear all
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      )}
 
       {/* User Profile */}
       <div className="border-t px-4 py-3">
