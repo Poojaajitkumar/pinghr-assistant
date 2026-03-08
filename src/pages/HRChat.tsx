@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loader2, ArrowUp, Sparkles, Mail, Bot, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import HRConversationSidebar from "@/components/HRConversationSidebar";
 import MyRequestsPanel from "@/components/MyRequestsPanel";
 import ChatMessageBubble from "@/components/ChatMessageBubble";
