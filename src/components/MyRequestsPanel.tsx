@@ -93,7 +93,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequest
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
-          className="w-96 border-l bg-card flex flex-col h-full flex-shrink-0"
+          className="w-96 border-l bg-card flex flex-col h-full flex-shrink-0 fixed right-0 top-0 bottom-0 z-40"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 pt-5 pb-3">
