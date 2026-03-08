@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import HRLayout from "@/components/HRLayout";
+import ConversationSidebar from "@/components/ConversationSidebar";
 
 const logs = [
   { id: "1", timestamp: "2026-03-03 09:15", employee: "Jordan Lee", query: "Unpaid leave for family care", action: "Escalated to HR", confidence: "low" as const, resolution: "Pending" },
@@ -22,10 +23,22 @@ const logs = [
 ];
 
 export default function AuditLog() {
+  const [activeConversation, setActiveConversation] = useState<string | null>(null);
+
   return (
-    <HRLayout>
-      {() => (
-        <div className="p-6 max-w-6xl mx-auto">
+    <div className="min-h-screen flex w-full">
+      <ConversationSidebar
+        activeConversationId={activeConversation}
+        onSelectConversation={setActiveConversation}
+        onNewConversation={() => setActiveConversation(null)}
+      />
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-auto">
+        <header className="flex items-center px-6 py-3 border-b bg-card">
+          <span className="font-semibold text-base text-primary">PingHR</span>
+          <span className="text-muted-foreground text-sm ml-3">/ Audit Log</span>
+        </header>
+
+        <div className="p-6 max-w-6xl mx-auto w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-1">Audit Log</h1>
             <p className="text-muted-foreground text-sm">Complete record of all PingHR interactions and resolutions</p>
@@ -77,7 +90,7 @@ export default function AuditLog() {
             </Table>
           </div>
         </div>
-      )}
-    </HRLayout>
+      </main>
+    </div>
   );
 }
