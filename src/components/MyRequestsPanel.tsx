@@ -1,17 +1,25 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronDown, FileText } from "lucide-react";
+import { X, ChevronDown, ChevronUp, FileText, MessageSquare, Bot } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 type RequestStatus = "pending" | "in_review" | "resolved";
 
+export interface AuditEvent {
+  label: string;
+  timestamp: Date;
+}
+
 export interface EscalatedRequest {
   id: string;
   summary: string;
+  fullSummary: string;
+  aiResponse: string;
   status: RequestStatus;
   priority: "critical" | "high" | "medium";
   category: string;
   timestamp: Date;
+  auditLog: AuditEvent[];
 }
 
 function timeAgo(date: Date): string {
@@ -21,6 +29,14 @@ function timeAgo(date: Date): string {
   const days = Math.floor(hours / 24);
   if (days === 1) return "1 day ago";
   return `${days} days ago`;
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }) + ", " + date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
 const statusLabels: Record<RequestStatus, string> = {
@@ -52,6 +68,7 @@ interface MyRequestsPanelProps {
 export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequestsPanelProps) {
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showAiResponseId, setShowAiResponseId] = useState<string | null>(null);
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
   const inReviewCount = requests.filter((r) => r.status === "in_review").length;
@@ -131,49 +148,143 @@ export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequest
                 No requests yet. Escalate a response to create one.
               </div>
             )}
-            {filtered.map((req) => (
-              <div
-                key={req.id}
-                className="border rounded-xl p-4 bg-card"
-              >
-                <div className="flex items-start gap-2.5">
-                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm leading-snug mb-2">{req.summary}</p>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 ${statusBadgeStyles[req.status]}`}
+            {filtered.map((req) => {
+              const isExpanded = expandedId === req.id;
+              const showAi = showAiResponseId === req.id;
+
+              return (
+                <div
+                  key={req.id}
+                  className={`border rounded-xl bg-card transition-all ${
+                    isExpanded ? "border-l-[3px] border-l-warning" : ""
+                  }`}
+                >
+                  {/* Collapsed header */}
+                  <div className="p-4">
+                    <div className="flex items-start gap-2.5">
+                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm leading-snug mb-2">{req.summary}</p>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${statusBadgeStyles[req.status]}`}
+                          >
+                            ● {statusLabels[req.status]}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${priorityColors[req.priority]}`}
+                          >
+                            ● {req.priority.charAt(0).toUpperCase() + req.priority.slice(1)}
+                          </Badge>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            {req.category}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">{timeAgo(req.timestamp)}</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setExpandedId(isExpanded ? null : req.id);
+                          if (isExpanded) setShowAiResponseId(null);
+                        }}
+                        className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
                       >
-                        ● {statusLabels[req.status]}
-                      </Badge>
+                        <ChevronDown
+                          className={`h-4 w-4 text-muted-foreground transition-transform ${
+                            isExpanded ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] px-1.5 py-0 ${priorityColors[req.priority]}`}
-                      >
-                        ● {req.priority.charAt(0).toUpperCase() + req.priority.slice(1)}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                        {req.category}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">{timeAgo(req.timestamp)}</p>
                   </div>
-                  <button
-                    onClick={() => setExpandedId(expandedId === req.id ? null : req.id)}
-                    className="p-1 rounded hover:bg-muted transition-colors flex-shrink-0"
-                  >
-                    <ChevronDown
-                      className={`h-4 w-4 text-muted-foreground transition-transform ${
-                        expandedId === req.id ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
+
+                  {/* Expanded content */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 space-y-3">
+                          {/* Summary */}
+                          <div className="border-l-2 border-warning/40 bg-warning/5 rounded-r-lg p-3">
+                            <p className="text-[10px] font-semibold text-warning uppercase tracking-wider mb-1.5">
+                              Summary
+                            </p>
+                            <p className="text-sm leading-relaxed text-foreground">
+                              {req.fullSummary}
+                            </p>
+                          </div>
+
+                          {/* View AI Response toggle */}
+                          <button
+                            onClick={() => setShowAiResponseId(showAi ? null : req.id)}
+                            className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors w-full"
+                          >
+                            {showAi ? (
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                            View AI Response
+                          </button>
+
+                          {showAi && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              transition={{ duration: 0.15 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="border rounded-lg p-3 bg-muted/30">
+                                <div className="flex items-center gap-1.5 mb-2">
+                                  <Bot className="h-3.5 w-3.5 text-primary" />
+                                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">
+                                    AI Response
+                                  </span>
+                                </div>
+                                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                                  {req.aiResponse.replace(/\*\*/g, "")}
+                                </p>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {/* Audit Log */}
+                          <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                              Audit Log
+                            </p>
+                            <div className="space-y-0">
+                              {req.auditLog.map((event, idx) => (
+                                <div key={idx} className="flex items-start gap-2.5 relative">
+                                  {/* Timeline connector */}
+                                  {idx < req.auditLog.length - 1 && (
+                                    <div className="absolute left-[7px] top-5 bottom-0 w-px bg-border" />
+                                  )}
+                                  <MessageSquare className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0 relative z-10" />
+                                  <div className="pb-3">
+                                    <p className="text-sm text-foreground">{event.label}</p>
+                                    <p className="text-xs text-muted-foreground">{formatDate(event.timestamp)}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.div>
       )}
