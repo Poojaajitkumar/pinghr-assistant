@@ -113,6 +113,7 @@ export default function HRChat() {
   const { user } = useAuth();
   const { getAssignedTickets, getAssignedRequests } = useHRTickets();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationMessages, setConversationMessages] = useState<Record<string, Message[]>>({});
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [requestsOpen, setRequestsOpen] = useState(false);
