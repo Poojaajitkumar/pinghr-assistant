@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Loader2, ArrowUp, Sparkles, Mail, Bot } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Loader2, ArrowUp, Sparkles, Mail, Bot, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import HRConversationSidebar from "@/components/HRConversationSidebar";
 import MyRequestsPanel from "@/components/MyRequestsPanel";
@@ -7,6 +8,7 @@ import ChatMessageBubble from "@/components/ChatMessageBubble";
 import HRCategoryCards from "@/components/HRCategoryCards";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHRTickets } from "@/contexts/HRTicketsContext";
+import { mockEmployees } from "@/data/mockEmployees";
 import { toast } from "sonner";
 import type { Conversation } from "@/components/ConversationSidebar";
 
@@ -109,9 +111,35 @@ async function streamChat({
   onDone();
 }
 
+function buildTicketContextPrompt(ticket: {
+  employee: string;
+  question: string;
+  category: string;
+  priority: string;
+  aiDraft: string;
+}): string {
+  const emp = mockEmployees.find((e) => e.name === ticket.employee);
+  const empInfo = emp
+    ? `\n**Employee Profile:** ${emp.name} · ${emp.role} · ${emp.department} · ${emp.location} · Tenure: ${emp.tenure} · Manager: ${emp.manager}`
+    : "";
+
+  return `I'm working on an escalated HR request. Here are the details:
+
+**Employee:** ${ticket.employee}${empInfo}
+**Category:** ${ticket.category}
+**Priority:** ${ticket.priority.toUpperCase()}
+**Employee's Question:** "${ticket.question}"
+
+**AI's Draft Response:**
+${ticket.aiDraft}
+
+Help me review this case. Is the AI draft accurate? Are there any policy nuances I should consider? What's the best way to handle this?`;
+}
+
 export default function HRChat() {
   const { user } = useAuth();
-  const { getAssignedTickets, getAssignedRequests } = useHRTickets();
+  const { getAssignedTickets, getAssignedRequests, getTicketById } = useHRTickets();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationMessages, setConversationMessages] = useState<Record<string, Message[]>>({});
   const [input, setInput] = useState("");
@@ -119,6 +147,8 @@ export default function HRChat() {
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
+  const [processedTickets, setProcessedTickets] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -131,6 +161,27 @@ export default function HRChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handle deep-link from HR Ops with ?ticket=ID
+  useEffect(() => {
+    const ticketId = searchParams.get("ticket");
+    if (ticketId && !processedTickets.has(ticketId)) {
+      const ticket = getTicketById(ticketId);
+      if (ticket) {
+        setActiveTicketId(ticketId);
+        setProcessedTickets((prev) => new Set(prev).add(ticketId));
+        // Clear the param so refreshing doesn't re-inject
+        setSearchParams({}, { replace: true });
+
+        // Auto-inject the context as a message and send to agent
+        const contextPrompt = buildTicketContextPrompt(ticket);
+        // Small delay to let the component mount
+        setTimeout(() => {
+          handleSendWithContext(contextPrompt, `ticket-${ticketId}`);
+        }, 300);
+      }
+    }
+  }, [searchParams]);
+
   // Helper to update messages and sync to conversationMessages
   const updateMessages = useCallback((convId: string | null, updater: (prev: Message[]) => Message[]) => {
     setMessages((prev) => {
@@ -141,6 +192,74 @@ export default function HRChat() {
       return next;
     });
   }, []);
+
+  const handleSendWithContext = useCallback(async (text: string, convIdOverride?: string) => {
+    const msg = text.trim();
+    if (!msg) return;
+
+    const convId = convIdOverride || `conv-${Date.now()}`;
+    const preview = msg.length > 40 ? msg.slice(0, 40) + "..." : msg;
+
+    // Check if conversation already exists
+    setConversations((prev) => {
+      if (prev.find((c) => c.id === convId)) return prev;
+      return [{ id: convId, preview: `📋 ${preview}`, timestamp: new Date() }, ...prev];
+    });
+    setActiveConversation(convId);
+
+    const userMsg: Message = { id: Date.now().toString(), role: "user", content: msg, timestamp: new Date() };
+    updateMessages(convId, (prev) => [...prev, userMsg]);
+    setIsTyping(true);
+
+    const history = [{ role: "user", content: msg }];
+
+    let assistantContent = "";
+
+    try {
+      await streamChat({
+        messages: history,
+        onDelta: (chunk) => {
+          assistantContent += chunk;
+          updateMessages(convId, (prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === "assistant" && last.id.startsWith("stream-")) {
+              return prev.map((m, i) =>
+                i === prev.length - 1 ? { ...m, content: assistantContent } : m
+              );
+            }
+            return [
+              ...prev,
+              {
+                id: `stream-${Date.now()}`,
+                role: "assistant" as const,
+                content: assistantContent,
+                timestamp: new Date(),
+                confidence: "high" as const,
+              },
+            ];
+          });
+        },
+        onDone: () => {
+          setIsTyping(false);
+        },
+      });
+    } catch (e) {
+      console.error("Stream error:", e);
+      setIsTyping(false);
+      if (!assistantContent) {
+        updateMessages(convId, (prev) => [
+          ...prev,
+          {
+            id: `err-${Date.now()}`,
+            role: "assistant",
+            content: "Sorry, I encountered an error. Please try again.",
+            timestamp: new Date(),
+            confidence: "high",
+          },
+        ]);
+      }
+    }
+  }, [updateMessages]);
 
   const handleSend = useCallback(async (text?: string) => {
     const msg = text || input.trim();
@@ -215,7 +334,6 @@ export default function HRChat() {
   }, [input, isTyping, activeConversation, messages, updateMessages]);
 
   const handleSelectConversation = (id: string) => {
-    // Save current conversation messages before switching
     if (activeConversation && messages.length > 0) {
       setConversationMessages((cm) => ({ ...cm, [activeConversation]: messages }));
     }
@@ -224,12 +342,12 @@ export default function HRChat() {
   };
 
   const handleNewConversation = () => {
-    // Save current conversation messages before creating new
     if (activeConversation && messages.length > 0) {
       setConversationMessages((cm) => ({ ...cm, [activeConversation]: messages }));
     }
     setMessages([]);
     setActiveConversation(null);
+    setActiveTicketId(null);
   };
 
   const handleDeleteConversation = (id: string) => {
@@ -242,6 +360,7 @@ export default function HRChat() {
     if (activeConversation === id) {
       setMessages([]);
       setActiveConversation(null);
+      setActiveTicketId(null);
     }
   };
 
@@ -250,9 +369,11 @@ export default function HRChat() {
     setConversationMessages({});
     setMessages([]);
     setActiveConversation(null);
+    setActiveTicketId(null);
   };
 
-  const showWelcome = messages.length === 0;
+  const showWelcome = messages.length === 0 && !isTyping;
+  const activeTicket = activeTicketId ? getTicketById(activeTicketId) : null;
 
   return (
     <div className="min-h-screen flex w-full">
@@ -271,6 +392,12 @@ export default function HRChat() {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-base text-primary">PingHR</span>
             <span className="text-muted-foreground text-sm">/ HR Chat</span>
+            {activeTicket && (
+              <Badge variant="outline" className="ml-2 text-xs gap-1 border-primary/20 text-primary">
+                <FileText className="h-3 w-3" />
+                Working on: {activeTicket.employee}'s request
+              </Badge>
+            )}
           </div>
           <Button
             variant="outline"
