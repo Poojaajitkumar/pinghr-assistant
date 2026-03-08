@@ -57,13 +57,20 @@ export default function HRConversationSidebar({
 
   if (collapsed) {
     return (
-      <aside className="w-16 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
+      <aside className="relative w-16 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-visible transition-all duration-200 group/sidebar">
         {/* Branding - icon only */}
         <div className="px-3 pt-5 pb-4 flex items-center justify-center">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-sm font-bold text-primary-foreground">P</span>
           </div>
         </div>
+        {/* Edge toggle button */}
+        <button
+          onClick={() => setCollapsed(false)}
+          className="absolute -right-3 top-7 z-50 h-6 w-6 rounded-full border bg-card shadow-sm flex items-center justify-center opacity-0 group-hover/sidebar:opacity-100 hover:bg-accent transition-all"
+        >
+          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+        </button>
 
         {/* Nav Links - icons only */}
         <div className="px-2 pb-3 space-y-1">
@@ -148,16 +155,8 @@ export default function HRConversationSidebar({
           ))}
         </div>
 
-        {/* Toggle + User */}
-        <div className="border-t px-2 py-2 space-y-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="w-full h-8" onClick={() => setCollapsed(false)}>
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Expand sidebar</TooltipContent>
-          </Tooltip>
+        {/* User avatar */}
+        <div className="border-t px-2 py-3 flex justify-center">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -179,7 +178,14 @@ export default function HRConversationSidebar({
   }
 
   return (
-    <aside className="w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
+    <aside className="relative w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-visible transition-all duration-200 group/sidebar">
+      {/* Edge toggle button */}
+      <button
+        onClick={() => setCollapsed(true)}
+        className="absolute -right-3 top-7 z-50 h-6 w-6 rounded-full border bg-card shadow-sm flex items-center justify-center opacity-0 group-hover/sidebar:opacity-100 hover:bg-accent transition-all"
+      >
+        <ChevronLeft className="h-3 w-3 text-muted-foreground" />
+      </button>
       {/* Branding */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
@@ -320,15 +326,8 @@ export default function HRConversationSidebar({
         ))}
       </div>
 
-      {/* Toggle + User Profile */}
-      <div className="border-t px-3 py-3 space-y-1">
-        <button
-          onClick={() => setCollapsed(true)}
-          className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/60 transition-colors text-muted-foreground"
-        >
-          <PanelLeftClose className="h-4 w-4" />
-          <span className="text-sm">Collapse</span>
-        </button>
+      {/* User Profile */}
+      <div className="border-t px-4 py-3">
         <button
           onClick={signOut}
           className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-muted/60 transition-colors"
