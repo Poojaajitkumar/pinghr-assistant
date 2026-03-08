@@ -428,6 +428,13 @@ export default function HRChat() {
           </Button>
         </header>
 
+        {activeTicket && (
+          <TicketActionBar
+            ticket={activeTicket}
+            onMoveToNext={handleMoveTicketToNext}
+          />
+        )}
+
         <div className="flex-1 overflow-y-auto">
           {showWelcome ? (
             <div className="flex flex-col items-center justify-center px-6 py-6 max-w-3xl mx-auto h-full">
