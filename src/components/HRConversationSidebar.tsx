@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, Trash2, MoreHorizontal, ClipboardList, BarChart3, Inbox } from "lucide-react";
+import { MessageSquare, Plus, Trash2, MoreHorizontal, BarChart3, Inbox, PanelLeftClose, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { NavLink } from "@/components/NavLink";
@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import type { Conversation } from "@/components/ConversationSidebar";
@@ -52,18 +53,147 @@ export default function HRConversationSidebar({
   const displayName = user?.email?.split("@")[0] ?? "User";
   const displayEmail = user?.email ?? "";
   const [showClearDialog, setShowClearDialog] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+
+  if (collapsed) {
+    return (
+      <aside className="w-16 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
+        {/* Branding - icon only */}
+        <div className="px-3 pt-5 pb-4 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-sm font-bold text-primary-foreground">P</span>
+          </div>
+        </div>
+
+        {/* Nav Links - icons only */}
+        <div className="px-2 pb-3 space-y-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/hr-chat"
+                end
+                className="flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 transition-colors"
+                activeClassName="bg-accent text-accent-foreground"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="right">Chat</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/hr-ops"
+                end
+                className="relative flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 transition-colors"
+                activeClassName="bg-accent text-accent-foreground"
+              >
+                <Inbox className="h-4 w-4" />
+                {assignedCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                    {assignedCount}
+                  </span>
+                )}
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="right">HR Ops</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NavLink
+                to="/audit-log"
+                end
+                className="flex items-center justify-center p-2 rounded-lg hover:bg-muted/60 transition-colors"
+                activeClassName="bg-accent text-accent-foreground"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="right">Audit Log</TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="border-t mx-2" />
+
+        {/* New conversation - icon only */}
+        <div className="px-2 py-3 flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" className="h-10 w-10" onClick={onNewConversation}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">New conversation</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* Conversation list - icons only */}
+        <div className="flex-1 overflow-y-auto px-2 space-y-1">
+          {conversations.map((conv) => (
+            <Tooltip key={conv.id}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onSelectConversation(conv.id)}
+                  className={`w-full flex items-center justify-center p-2 rounded-lg transition-colors ${
+                    activeConversationId === conv.id
+                      ? "bg-accent text-accent-foreground"
+                      : "hover:bg-muted/60"
+                  }`}
+                >
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{conv.preview}</TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+
+        {/* Expand button */}
+        <div className="px-2 py-2 flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCollapsed(false)}>
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* User avatar */}
+        <div className="border-t px-2 py-3 flex justify-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={signOut}
+                className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity"
+              >
+                <span className="text-xs font-semibold text-primary-foreground">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Sign out ({displayEmail})</TooltipContent>
+          </Tooltip>
+        </div>
+      </aside>
+    );
+  }
 
   return (
-    <aside className="w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden">
+    <aside className="w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
       {/* Branding */}
       <div className="px-5 pt-5 pb-4 flex items-center gap-2.5">
         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
           <span className="text-sm font-bold text-primary-foreground">P</span>
         </div>
-        <div>
+        <div className="flex-1">
           <span className="font-semibold text-base tracking-tight">PingHR</span>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">HR Portal</p>
         </div>
+        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={() => setCollapsed(true)}>
+          <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+        </Button>
       </div>
 
       {/* HR Nav Links */}
