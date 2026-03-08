@@ -141,7 +141,7 @@ Help me review this case. Is the AI draft accurate? Are there any policy nuances
 
 export default function HRChat() {
   const { user } = useAuth();
-  const { getAssignedTickets, getAssignedRequests, getTicketById } = useHRTickets();
+  const { getAssignedTickets, getAssignedRequests, getTicketById, addResolutionNote, updateTicketStatus } = useHRTickets();
   const [searchParams, setSearchParams] = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationMessages, setConversationMessages] = useState<Record<string, Message[]>>({});
