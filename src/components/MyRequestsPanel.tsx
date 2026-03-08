@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ResolutionTag } from "@/contexts/HRTicketsContext";
 import { resolutionTagConfig } from "@/contexts/HRTicketsContext";
 
-type RequestStatus = "pending" | "in_progress" | "in_review" | "resolved";
+type RequestStatus = "pending" | "assigned" | "in_progress" | "in_review" | "resolved";
 
 export interface AuditEvent {
   label: string;
@@ -46,6 +46,7 @@ function formatDate(date: Date): string {
 
 const statusLabels: Record<RequestStatus, string> = {
   pending: "Pending Review",
+  assigned: "Assigned",
   in_progress: "In Progress",
   in_review: "In Review",
   resolved: "Resolved",
@@ -53,6 +54,7 @@ const statusLabels: Record<RequestStatus, string> = {
 
 const statusBadgeStyles: Record<RequestStatus, string> = {
   pending: "border-warning/30 text-warning bg-warning/5",
+  assigned: "border-accent/30 text-accent-foreground bg-accent/30",
   in_progress: "border-primary/30 text-primary bg-primary/5",
   in_review: "border-info/30 text-info bg-info/5",
   resolved: "border-success/30 text-success bg-success/5",
@@ -314,7 +316,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests, onWorkOnReq
 
                           {/* Action buttons based on status */}
                           <div className="pt-1">
-                            {(req.status === "pending" || req.status === "in_progress") && (
+                            {(req.status === "pending" || req.status === "assigned" || req.status === "in_progress") && (
                               <Button
                                 size="sm"
                                 className="w-full gap-2 text-xs"
