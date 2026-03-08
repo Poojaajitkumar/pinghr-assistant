@@ -59,10 +59,18 @@ export default function HRConversationSidebar({
     return (
       <aside className="w-16 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-hidden transition-all duration-200">
         {/* Branding - icon only */}
-        <div className="px-3 pt-5 pb-4 flex items-center justify-center">
+        <div className="px-3 pt-5 pb-4 flex items-center justify-between">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-sm font-bold text-primary-foreground">P</span>
           </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setCollapsed(false)}>
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand sidebar</TooltipContent>
+          </Tooltip>
         </div>
 
         {/* Nav Links - icons only */}
