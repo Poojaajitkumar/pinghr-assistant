@@ -81,6 +81,7 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [requestsOpen, setRequestsOpen] = useState(false);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [escalatedRequests, setEscalatedRequests] = useState<EscalatedRequest[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,7 +128,20 @@ export default function ChatPage() {
     setActiveConversation(null);
   };
 
-  const showWelcome = messages.length === 0;
+  const handleEscalate = (msg: Message) => {
+    const userMsg = messages.find(
+      (m) => m.role === "user" && messages.indexOf(m) < messages.indexOf(msg)
+    );
+    const newRequest: EscalatedRequest = {
+      id: `esc-${Date.now()}`,
+      summary: userMsg ? userMsg.content : msg.content.slice(0, 80) + "...",
+      status: "pending",
+      priority: "high",
+      category: "General",
+      timestamp: new Date(),
+    };
+    setEscalatedRequests((prev) => [newRequest, ...prev]);
+  };
 
   return (
     <div className="min-h-screen flex w-full">
