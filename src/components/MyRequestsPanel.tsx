@@ -263,7 +263,7 @@ export default function MyRequestsPanel({ isOpen, onClose, requests }: MyRequest
                               Audit Log
                             </p>
                             <div className="space-y-0">
-                              {req.auditLog.map((event, idx) => (
+                              {(req.auditLog ?? []).map((event, idx) => (
                                 <div key={idx} className="flex items-start gap-2.5 relative">
                                   {/* Timeline connector */}
                                   {idx < req.auditLog.length - 1 && (
