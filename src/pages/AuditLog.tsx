@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,7 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import HRConversationSidebar from "@/components/HRConversationSidebar";
+import MyRequestsPanel from "@/components/MyRequestsPanel";
 import type { Conversation } from "@/components/ConversationSidebar";
+import { useAuth } from "@/contexts/AuthContext";
+import { useHRTickets } from "@/contexts/HRTicketsContext";
 
 const logs = [
   { id: "1", timestamp: "2026-03-03 09:15", employee: "Jordan Lee", query: "Unpaid leave for family care", action: "Escalated to HR", confidence: "low" as const, resolution: "Pending" },
@@ -24,8 +28,15 @@ const logs = [
 ];
 
 export default function AuditLog() {
+  const { user } = useAuth();
+  const { getAssignedTickets, getAssignedRequests } = useHRTickets();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [requestsOpen, setRequestsOpen] = useState(false);
+
+  const displayName = user?.email?.split("@")[0] ?? "HR User";
+  const assignedTickets = getAssignedTickets(displayName);
+  const assignedRequests = getAssignedRequests(displayName);
 
   return (
     <div className="min-h-screen flex w-full">
@@ -39,11 +50,28 @@ export default function AuditLog() {
           if (activeConversation === id) setActiveConversation(null);
         }}
         onClearAll={() => { setConversations([]); setActiveConversation(null); }}
+        assignedCount={assignedTickets.length}
       />
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-auto">
-        <header className="flex items-center px-6 py-3 border-b bg-card">
-          <span className="font-semibold text-base text-primary">PingHR</span>
-          <span className="text-muted-foreground text-sm ml-3">/ Audit Log</span>
+        <header className="flex items-center justify-between px-6 py-3 border-b bg-card">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-base text-primary">PingHR</span>
+            <span className="text-muted-foreground text-sm ml-1">/ Audit Log</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-primary border-primary/30 hover:bg-primary/5"
+            onClick={() => setRequestsOpen(true)}
+          >
+            <Mail className="h-4 w-4" />
+            My Assigned
+            {assignedTickets.length > 0 && (
+              <span className="ml-1 h-5 min-w-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                {assignedTickets.length}
+              </span>
+            )}
+          </Button>
         </header>
 
         <div className="p-6 max-w-6xl mx-auto w-full">
@@ -99,6 +127,8 @@ export default function AuditLog() {
           </div>
         </div>
       </main>
+
+      <MyRequestsPanel isOpen={requestsOpen} onClose={() => setRequestsOpen(false)} requests={assignedRequests} />
     </div>
   );
 }

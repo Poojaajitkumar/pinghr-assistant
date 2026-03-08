@@ -30,78 +30,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import HRConversationSidebar from "@/components/HRConversationSidebar";
-import MyRequestsPanel, { type EscalatedRequest, type AuditEvent } from "@/components/MyRequestsPanel";
+import MyRequestsPanel from "@/components/MyRequestsPanel";
 import type { Conversation } from "@/components/ConversationSidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useHRTickets } from "@/contexts/HRTicketsContext";
 
 type Priority = "critical" | "high" | "medium";
 type Status = "pending" | "assigned" | "in_review" | "resolved";
-
-interface EscalatedTicket {
-  id: string;
-  employee: string;
-  question: string;
-  aiDraft: string;
-  status: Status;
-  priority: Priority;
-  category: string;
-  timestamp: Date;
-  assignedTo?: string;
-  timeToResolve?: number;
-}
-
-const mockTickets: EscalatedTicket[] = [
-  {
-    id: "1",
-    employee: "Jordan Lee",
-    question: "Can I take unpaid leave for 3 months to care for a family member abroad?",
-    aiDraft: "Hi Jordan,\n\nUnder our Extended Leave Policy, you have a few options:\n\n1. **FMLA Leave** — up to 12 weeks protected leave\n2. **Personal Leave** — up to 6 months with VP approval\n3. **Remote Work** — possible depending on role\n\nBest,\nHR Team",
-    status: "pending",
-    priority: "critical",
-    category: "Leave & Time Off",
-    timestamp: new Date(Date.now() - 2 * 3600000),
-  },
-  {
-    id: "2",
-    employee: "Sam Patel",
-    question: "Stock options vesting schedule differs from offer letter",
-    aiDraft: "Hi Sam,\n\nThank you for flagging this. I've created a ticket for Equity Administration to review your vesting schedule.\n\nExpected response: 2–3 business days.\n\nBest,\nHR Team",
-    status: "pending",
-    priority: "high",
-    category: "Compensation",
-    timestamp: new Date(Date.now() - 5 * 3600000),
-  },
-  {
-    id: "3",
-    employee: "Alex Kim",
-    question: "Internal transfer process to another team — what are the steps?",
-    aiDraft: "Hi Alex,\n\n1. Express interest to current manager\n2. Apply via Internal Job Board\n3. Interview with receiving team\n4. Both managers approve\n5. HR facilitates transition\n\nBest,\nHR Team",
-    status: "pending",
-    priority: "medium",
-    category: "Career Development",
-    timestamp: new Date(Date.now() - 86400000),
-  },
-  {
-    id: "4",
-    employee: "Morgan Chen",
-    question: "Tuition reimbursement for part-time MBA program — am I eligible?",
-    aiDraft: "Hi Morgan,\n\nYes! Up to $10,000/year for approved programs. Requirements: accredited institution, 1 year employment, B average.\n\nBest,\nHR Team",
-    status: "pending",
-    priority: "medium",
-    category: "Benefits",
-    timestamp: new Date(Date.now() - 2 * 86400000),
-  },
-  {
-    id: "5",
-    employee: "Riley Park",
-    question: "When is the next pay day and how do I update my bank details?",
-    aiDraft: "Hi Riley,\n\nNext pay date: March 15, 2026 (bi-weekly cycle).\n\nTo update bank details: HR Portal → My Profile → Payment Info.\n\nBest,\nHR Team",
-    status: "pending",
-    priority: "medium",
-    category: "Payroll & Pay",
-    timestamp: new Date(Date.now() - 3 * 86400000),
-  },
-];
 
 const priorityConfig: Record<Priority, { label: string; className: string }> = {
   critical: { label: "Critical", className: "bg-destructive/10 text-destructive border-destructive/20" },
@@ -120,7 +55,7 @@ type FilterCategory = "all" | string;
 
 export default function HROps() {
   const { user } = useAuth();
-  const [tickets, setTickets] = useState(mockTickets);
+  const { tickets, assignTicketToMe, updateTicketStatus, getAssignedTickets, getAssignedRequests } = useHRTickets();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<FilterCategory>("all");
   const [requestsOpen, setRequestsOpen] = useState(false);
@@ -128,50 +63,11 @@ export default function HROps() {
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
 
   const displayName = user?.email?.split("@")[0] ?? "HR User";
-
   const categories = Array.from(new Set(tickets.map((t) => t.category)));
-
-  const assignedTickets = tickets.filter((t) => t.assignedTo === displayName);
-
-  const assignedRequests: EscalatedRequest[] = assignedTickets.map((t) => ({
-    id: t.id,
-    summary: t.question.length > 50 ? t.question.slice(0, 50) + "..." : t.question,
-    fullSummary: `${t.employee} asked: "${t.question}". AI drafted a response pending your review.`,
-    aiResponse: t.aiDraft,
-    status: t.status === "resolved" ? "resolved" : t.status === "in_review" ? "in_review" : "pending",
-    priority: t.priority,
-    category: t.category,
-    timestamp: t.timestamp,
-    auditLog: [
-      { label: `Assigned to ${displayName}`, timestamp: new Date() },
-      { label: "Escalated by employee", timestamp: t.timestamp },
-    ],
-  }));
-
-  const handleAssignToMe = (id: string) => {
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, status: "assigned" as Status, assignedTo: displayName } : t
-      )
-    );
-  };
-
-  const handleStatusChange = (id: string, newStatus: Status) => {
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              status: newStatus,
-              timeToResolve: newStatus === "resolved" ? Math.floor(Math.random() * 60 + 15) : undefined,
-            }
-          : t
-      )
-    );
-  };
+  const assignedTickets = getAssignedTickets(displayName);
+  const assignedRequests = getAssignedRequests(displayName);
 
   const filtered = categoryFilter === "all" ? tickets : tickets.filter((t) => t.category === categoryFilter);
-
   const sorted = [...filtered].sort((a, b) => {
     const order: Record<Priority, number> = { critical: 0, high: 1, medium: 2 };
     return order[a.priority] - order[b.priority];
@@ -293,7 +189,7 @@ export default function HROps() {
                               className="h-7 text-xs gap-1"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleAssignToMe(ticket.id);
+                                assignTicketToMe(ticket.id, displayName);
                               }}
                             >
                               <UserPlus className="h-3 w-3" />
@@ -318,15 +214,11 @@ export default function HROps() {
                           <TableCell colSpan={7} className="bg-muted/10 p-0">
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-6 py-4 space-y-4">
                               <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                  Employee Question
-                                </h4>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Employee Question</h4>
                                 <p className="text-sm bg-card rounded-lg p-3 border">{ticket.question}</p>
                               </div>
                               <div>
-                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                  AI-Drafted Response
-                                </h4>
+                                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">AI-Drafted Response</h4>
                                 <div className="text-sm bg-accent/30 rounded-lg p-3 whitespace-pre-wrap border border-primary/10">
                                   {ticket.aiDraft.split(/(\*\*.*?\*\*)/).map((part, i) =>
                                     part.startsWith("**") && part.endsWith("**") ? (
@@ -339,49 +231,25 @@ export default function HROps() {
                               </div>
                               <div className="flex gap-2">
                                 {!ticket.assignedTo && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleAssignToMe(ticket.id);
-                                    }}
-                                  >
-                                    <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-                                    Assign to me
+                                  <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); assignTicketToMe(ticket.id, displayName); }}>
+                                    <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Assign to me
                                   </Button>
                                 )}
                                 {isAssignedToMe && ticket.status !== "resolved" && (
                                   <>
                                     {ticket.status !== "in_review" && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleStatusChange(ticket.id, "in_review");
-                                        }}
-                                      >
-                                        <Eye className="h-3.5 w-3.5 mr-1.5" />
-                                        Start Review
+                                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); updateTicketStatus(ticket.id, "in_review"); }}>
+                                        <Eye className="h-3.5 w-3.5 mr-1.5" /> Start Review
                                       </Button>
                                     )}
-                                    <Button
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleStatusChange(ticket.id, "resolved");
-                                      }}
-                                    >
-                                      <Send className="h-3.5 w-3.5 mr-1.5" />
-                                      Send to Employee
+                                    <Button size="sm" onClick={(e) => { e.stopPropagation(); updateTicketStatus(ticket.id, "resolved"); }}>
+                                      <Send className="h-3.5 w-3.5 mr-1.5" /> Send to Employee
                                     </Button>
                                   </>
                                 )}
                                 {ticket.status === "resolved" && (
                                   <span className="text-xs text-success font-medium flex items-center gap-1">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Response sent
+                                    <CheckCircle2 className="h-3.5 w-3.5" /> Response sent
                                   </span>
                                 )}
                               </div>
