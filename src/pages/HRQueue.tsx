@@ -95,6 +95,7 @@ const statusConfig: Record<Status, { label: string; icon: typeof Clock; color: s
 };
 
 export default function HRQueue() {
+  const navigate = useNavigate();
   const [queries, setQueries] = useState(mockQueries);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
@@ -122,7 +123,7 @@ export default function HRQueue() {
         activeConversationId={activeConversation}
         conversations={[]}
         onSelectConversation={setActiveConversation}
-        onNewConversation={() => setActiveConversation(null)}
+        onNewConversation={() => navigate("/hr-chat")}
         onDeleteConversation={() => {}}
         onClearAll={() => {}}
       />
