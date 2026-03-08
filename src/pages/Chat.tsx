@@ -6,9 +6,6 @@ import MyRequestsPanel, { type EscalatedRequest } from "@/components/MyRequestsP
 import ChatMessageBubble from "@/components/ChatMessageBubble";
 import CategoryCards from "@/components/CategoryCards";
 import { useAuth } from "@/contexts/AuthContext";
-import ChatMessageBubble from "@/components/ChatMessageBubble";
-import CategoryCards from "@/components/CategoryCards";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface Message {
   id: string;
