@@ -71,7 +71,7 @@ export default function HRConversationSidebar({
         </div>
         {/* Edge toggle button */}
         <button
-          onClick={() => setCollapsed(false)}
+          onClick={() => toggleCollapsed(false)}
           className="absolute -right-3 top-7 z-50 h-6 w-6 rounded-full border bg-card shadow-sm flex items-center justify-center opacity-0 group-hover/sidebar:opacity-100 hover:bg-accent transition-all"
         >
           <ChevronRight className="h-3 w-3 text-muted-foreground" />
@@ -186,7 +186,7 @@ export default function HRConversationSidebar({
     <aside className="relative w-72 border-r bg-card flex flex-col h-screen flex-shrink-0 overflow-visible transition-all duration-200 group/sidebar">
       {/* Edge toggle button */}
       <button
-        onClick={() => setCollapsed(true)}
+        onClick={() => toggleCollapsed(true)}
         className="absolute -right-3 top-7 z-50 h-6 w-6 rounded-full border bg-card shadow-sm flex items-center justify-center opacity-0 group-hover/sidebar:opacity-100 hover:bg-accent transition-all"
       >
         <ChevronLeft className="h-3 w-3 text-muted-foreground" />
